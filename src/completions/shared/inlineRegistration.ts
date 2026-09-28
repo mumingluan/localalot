@@ -457,3 +457,33 @@ export function registerInlineCompletionProvider(
         throw error;
     }
 }
+
+/** Register the original provider when lifecycle additions are available. */
+export function registerOriginalInlineCompletionProvider(
+    selector: vscode.DocumentSelector,
+    provider: vscode.InlineCompletionItemProvider,
+    metadata: unknown,
+): vscode.Disposable {
+    const additions = vscode.languages as typeof vscode.languages & {
+        inlineCompletionsUnificationState?: unknown;
+    };
+    let supportsAdditions = false;
+    try {
+        supportsAdditions = additions.inlineCompletionsUnificationState !== undefined;
+    } catch {
+        supportsAdditions = false;
+    }
+    if (supportsAdditions) {
+        const register = vscode.languages.registerInlineCompletionItemProvider as unknown as (
+            selector: vscode.DocumentSelector,
+            provider: vscode.InlineCompletionItemProvider,
+            metadata?: unknown,
+        ) => vscode.Disposable;
+        try {
+            return register(selector, provider, metadata);
+        } catch (error) {
+            console.warn(`Localalot inline-completion additions unavailable; using stable bridge: ${String(error)}`);
+        }
+    }
+    return registerInlineCompletionProvider(selector, provider, metadata);
+}

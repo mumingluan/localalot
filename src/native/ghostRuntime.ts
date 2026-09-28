@@ -4,7 +4,7 @@ import { getLocalConfiguration } from '../config/compatConfiguration';
 import { IGhostConfigProvider } from '../config/ghostConfig';
 import { isEligibleForInlineCompletion } from '../completions/shared/documentEligibility';
 import { ILogService } from '../completions/shared/log/logService';
-import { registerInlineCompletionProvider } from '../completions/shared/inlineRegistration';
+import { registerOriginalInlineCompletionProvider } from '../completions/shared/inlineRegistration';
 import { waitForIgnoreRules } from './ignoreReadiness';
 import { withNativeInlineContext } from './inlineContext';
 
@@ -115,7 +115,7 @@ export class NativeGhostRuntime implements vscode.Disposable {
             },
         });
         this._native = instance;
-        this._registration = registerInlineCompletionProvider(
+        this._registration = registerOriginalInlineCompletionProvider(
             { pattern: '**' }, provider,
             { displayName: 'Localalot', debounceDelayMs: 0, groupId: 'completions' },
         );
