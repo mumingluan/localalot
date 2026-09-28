@@ -9,7 +9,7 @@ Localalot is a VS Code extension project for inline completions, next edits, and
 - Local model transport for OpenAI Completions, FIM Completions, Chat Completions, OpenAI Responses, and Anthropic Messages.
 - No Agent, Copilot chat panel, inline chat, or sidebar contribution.
 
-The model and prompt logic is kept in `vendor/copilot/src`. Localalot's code supplies configuration, VS Code lifecycle bridges, and local endpoint adapters. It does not require GitHub Copilot or GitHub Copilot Chat to be installed, signed in, or active.
+The model and prompt logic is kept in `vendor/copilot/src`. Localalot's code supplies configuration, VS Code lifecycle bridges, and local endpoint adapters. It does not require GitHub Copilot or GitHub Copilot Chat to be installed, signed in, or active. VS Code's `chat.disableAIFeatures` setting only disables built-in GitHub Copilot AI contributions; it does not disable Localalot.
 
 ## Quick Start
 

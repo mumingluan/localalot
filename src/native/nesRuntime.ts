@@ -112,7 +112,14 @@ export class NativeNesRuntime implements vscode.Disposable {
         this._native = instance;
         this._registration = registerOriginalInlineCompletionProvider(
             { pattern: '**' }, provider,
-            { displayName: 'Localalot Next Edit', debounceDelayMs: 0, groupId: 'nes' },
+            {
+                displayName: 'Localalot Next Edit',
+                debounceDelayMs: 0,
+                groupId: 'nes',
+                // Keep Localalot's next-edit provider authoritative when the
+                // GitHub provider is present, without requiring it to run.
+                excludes: ['github.copilot'],
+            },
         );
         this._setStartupError(undefined);
         this._log.info('Original Copilot NES provider registered with Localalot endpoint');

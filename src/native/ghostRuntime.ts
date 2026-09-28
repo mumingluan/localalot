@@ -117,7 +117,15 @@ export class NativeGhostRuntime implements vscode.Disposable {
         this._native = instance;
         this._registration = registerOriginalInlineCompletionProvider(
             { pattern: '**' }, provider,
-            { displayName: 'Localalot', debounceDelayMs: 0, groupId: 'completions' },
+            {
+                displayName: 'Localalot',
+                debounceDelayMs: 0,
+                groupId: 'completions',
+                // Match the upstream completion provider's arbitration rule.
+                // This also prevents duplicate ghost text when Copilot is
+                // installed but only partially disabled.
+                excludes: ['github.copilot'],
+            },
         );
         this._setStartupError(undefined);
         this._log.info('Original Copilot Ghost provider registered with Localalot endpoint');
