@@ -38,6 +38,9 @@ const extensionConfig = {
     new CopyPlugin({
       patterns: [
         { from: 'node_modules/web-tree-sitter/tree-sitter.wasm', to: 'wasm/tree-sitter.wasm' },
+        // The bundled Copilot parser resolves WASM files beside native-core.js.
+        // Localalot's parser uses the wasm/ subdirectory, so include both paths.
+        { from: 'node_modules/web-tree-sitter/tree-sitter.wasm', to: 'tree-sitter.wasm' },
         { from: 'resources/tokenizer/o200k_base.tiktoken', to: 'tokenizer/o200k_base.tiktoken' },
         { from: 'resources/tokenizer/LICENSE.txt', to: 'tokenizer/LICENSE.txt' },
         { from: 'vendor/copilot/src/platform/tokenizer/node/cl100k_base.tiktoken', to: 'cl100k_base.tiktoken', transform: compressTikToken },
@@ -46,7 +49,12 @@ const extensionConfig = {
           from: `node_modules/tree-sitter-wasms/out/tree-sitter-${language}.wasm`,
           to: `wasm/tree-sitter-${language}.wasm`,
         })),
+        ...wasmLanguages.map(language => ({
+          from: `node_modules/tree-sitter-wasms/out/tree-sitter-${language}.wasm`,
+          to: `tree-sitter-${language}.wasm`,
+        })),
         { from: 'node_modules/tree-sitter-wasms/out/tree-sitter-c_sharp.wasm', to: 'wasm/tree-sitter-c-sharp.wasm' },
+        { from: 'node_modules/tree-sitter-wasms/out/tree-sitter-c_sharp.wasm', to: 'tree-sitter-c-sharp.wasm' },
       ],
     }),
   ],

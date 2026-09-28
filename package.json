@@ -29,9 +29,6 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "enabledApiProposals": [
-    "inlineCompletionsAdditions"
-  ],
   "main": "./dist/extension.js",
   "contributes": {
     "typescriptServerPlugins": [
