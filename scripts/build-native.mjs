@@ -252,7 +252,7 @@ await build({
                 const relative = path.relative(path.dirname(args.path), path.resolve('native/vscodeCompatibility.ts')).replaceAll('\\', '/');
                 const settingsRelative = path.relative(path.dirname(args.path), path.resolve('native/localGhostSettings.ts')).replaceAll('\\', '/');
                 source = `import { isMeteredConnectionSafe } from '${relative.startsWith('.') ? relative : `./${relative}`}';\n`
-                    + `import { localRespectSelectedCompletionInfo } from '${settingsRelative.startsWith('.') ? settingsRelative : `./${settingsRelative}`}';\n`
+                    + `import { localRespectSelectedCompletionInfoForScope } from '${settingsRelative.startsWith('.') ? settingsRelative : `./${settingsRelative}`}';\n`
                     + source;
                 source = replaceOnce(source, 'env.isMeteredConnection', 'isMeteredConnectionSafe()');
                 source = replaceOnce(source,
@@ -263,7 +263,7 @@ await build({
                     '');
                 source = replaceOnce(source,
                     "copilotConfig.get('respectSelectedCompletionInfo', quickSuggestionsDisabled() || BuildInfo.isPreRelease())",
-                    'localRespectSelectedCompletionInfo(quickSuggestionsDisabled() || BuildInfo.isPreRelease())');
+                    'localRespectSelectedCompletionInfoForScope(doc.uri, quickSuggestionsDisabled() || BuildInfo.isPreRelease())');
                 source = replaceOnce(source,
                     'this.copilotCompletionFeedbackTracker = this._register(this.instantiationService.createInstance(CopilotCompletionFeedbackTracker));',
                     'this.copilotCompletionFeedbackTracker = { trackItem() {}, dispose() {} } as CopilotCompletionFeedbackTracker;');
