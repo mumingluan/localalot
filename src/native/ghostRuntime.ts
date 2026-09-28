@@ -94,6 +94,7 @@ export class NativeGhostRuntime implements vscode.Disposable {
                         context: vscode.InlineCompletionContext,
                         token: vscode.CancellationToken,
                     ) => {
+                        this._log.debug(`[Ghost] Provider invoked: language=${document.languageId}, trigger=${context.triggerKind}`);
                         if (!this._config.enabled || !this._config.endpointConfigured
                             || this._nesHandlesCompletions()
                             || !isEligibleForInlineCompletion(document)) return undefined;

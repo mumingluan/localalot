@@ -85,6 +85,11 @@
     ],
     "keybindings": [
       {
+        "command": "localalot.trigger",
+        "key": "alt+\\",
+        "when": "editorTextFocus && !editorReadonly && !editorTabMovesFocus"
+      },
+      {
         "command": "localalot.applyNextEdit",
         "key": "tab",
         "when": "editorTextFocus && localalot.nextEditAvailable && !editorReadonly && !editorHasSelection && !editorHasMultipleSelections && !editorTabMovesFocus && !editorHoverFocused && !suggestWidgetVisible && !inlineSuggestionVisible && !inlineEditIsVisible && !inSnippetMode"
