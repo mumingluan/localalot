@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../config/compatConfiguration';
 import { createServiceIdentifier } from '../di/services';
 import { IGhostConfigProvider } from '../config/ghostConfig';
 import { INesConfigProvider } from '../config/nesConfig';
@@ -132,13 +133,23 @@ export class StatusBarPanel implements IStatusBarPanel {
         const pendingEditChange = onDidChangePendingNextEdit(() => this._updateStatusBar());
         const configChange = vscode.workspace.onDidChangeConfiguration(event => {
             if (event.affectsConfiguration('localalot.enable')
+                || event.affectsConfiguration('cc-completion.enable')
                 || event.affectsConfiguration('localalot.nextEditSuggestions.enabled')
+                || event.affectsConfiguration('cc-completion.nextEditSuggestions.enabled')
                 || event.affectsConfiguration('localalot.nextEditSuggestions.extendedRange')
+                || event.affectsConfiguration('cc-completion.nextEditSuggestions.extendedRange')
+                || event.affectsConfiguration('localalot.nextEditSuggestions.eagerness')
+                || event.affectsConfiguration('cc-completion.nextEditSuggestions.eagerness')
                 || event.affectsConfiguration('localalot.exclude')
+                || event.affectsConfiguration('cc-completion.exclude')
                 || event.affectsConfiguration('localalot.ghost.baseUrl')
+                || event.affectsConfiguration('cc-completion.ghost.baseUrl')
                 || event.affectsConfiguration('localalot.nes.baseUrl')
+                || event.affectsConfiguration('cc-completion.nes.baseUrl')
                 || event.affectsConfiguration('localalot.nes.promptingStrategy')
+                || event.affectsConfiguration('cc-completion.nes.promptingStrategy')
                 || event.affectsConfiguration('localalot.nes.endpoint')
+                || event.affectsConfiguration('cc-completion.nes.endpoint')
                 || event.affectsConfiguration('editor.inlineSuggest.enabled')) {
                 this._updateStatusBar();
             }
@@ -226,7 +237,7 @@ export class StatusBarPanel implements IStatusBarPanel {
         const editorInlineOn = editor ? this._isEditorInlineSuggestEnabled(editor.document) : true;
         const language = editor?.document.languageId ?? 'current file';
         const enabledConfig = editor
-            ? vscode.workspace.getConfiguration('localalot', editor.document.uri)
+            ? getLocalConfiguration('localalot', editor.document.uri)
                 .get<Record<string, boolean> | boolean>('enable', { '*': true })
             : { '*': true };
         const hasLanguageOverride = typeof enabledConfig !== 'boolean'
@@ -283,7 +294,7 @@ export class StatusBarPanel implements IStatusBarPanel {
         };
         const eagerness: vscode.QuickPickItem = {
             label: '$(dashboard) Next Edit Eagerness...',
-            description: vscode.workspace.getConfiguration('localalot.nextEditSuggestions').get<string>('eagerness', 'auto'),
+            description: getLocalConfiguration('localalot.nextEditSuggestions').get<string>('eagerness', 'auto'),
         };
         const configureEndpoints: vscode.QuickPickItem = {
             label: '$(settings-gear) Configure Completion Endpoints...',
@@ -361,7 +372,7 @@ export class StatusBarPanel implements IStatusBarPanel {
     }
 
     private async _showEagernessPicker(): Promise<void> {
-        const config = vscode.workspace.getConfiguration('localalot.nextEditSuggestions');
+        const config = getLocalConfiguration('localalot.nextEditSuggestions');
         const current = config.get<string>('eagerness', 'auto');
         const choices = [
             { id: 'auto', label: 'Automatic' },
@@ -412,7 +423,7 @@ export class StatusBarPanel implements IStatusBarPanel {
     }
 
     private async _updateModel(kind: 'ghost' | 'nes', model: string): Promise<void> {
-        const config = vscode.workspace.getConfiguration(kind === 'ghost' ? 'localalot.ghost' : 'localalot.nes');
+        const config = getLocalConfiguration(kind === 'ghost' ? 'localalot.ghost' : 'localalot.nes');
         const target = modelSettingScope(config.inspect<string>('model'));
         await config.update('model', model, target);
     }
@@ -424,7 +435,7 @@ export class StatusBarPanel implements IStatusBarPanel {
     }
 
     private _isLanguageEnabled(document: vscode.TextDocument): boolean {
-        const configured = vscode.workspace.getConfiguration('localalot', document.uri)
+        const configured = getLocalConfiguration('localalot', document.uri)
             .get<Record<string, boolean> | boolean>('enable', { '*': true });
         return typeof configured === 'boolean'
             ? configured
@@ -458,7 +469,7 @@ export class StatusBarPanel implements IStatusBarPanel {
     private _isNextEditEnabled(document?: vscode.TextDocument): boolean {
         if (!this._nesConfig.enabled) return false;
         if (!document) return true;
-        return vscode.workspace.getConfiguration('localalot.nextEditSuggestions', {
+        return getLocalConfiguration('localalot.nextEditSuggestions', {
             uri: document.uri, languageId: document.languageId,
         }).get<boolean>('enabled', true);
     }
@@ -466,7 +477,7 @@ export class StatusBarPanel implements IStatusBarPanel {
     private _isNextCursorPredictionEnabled(document?: vscode.TextDocument): boolean {
         if (!this._nesConfig.enabled) return false;
         if (!document) return this._nesConfig.nextCursorPredictionEnabled;
-        const config = vscode.workspace.getConfiguration('localalot.nextEditSuggestions', {
+        const config = getLocalConfiguration('localalot.nextEditSuggestions', {
             uri: document.uri, languageId: document.languageId,
         });
         const inspected = config.inspect<boolean>('extendedRange');
@@ -479,7 +490,7 @@ export class StatusBarPanel implements IStatusBarPanel {
     private async _setNextEditEnabledForLanguage(enabled: boolean): Promise<void> {
         const document = vscode.window.activeTextEditor?.document;
         if (!document) return;
-        const config = vscode.workspace.getConfiguration('localalot.nextEditSuggestions', {
+        const config = getLocalConfiguration('localalot.nextEditSuggestions', {
             uri: document.uri, languageId: document.languageId,
         });
         const inspected = config.inspect<boolean>('enabled');
@@ -498,7 +509,7 @@ export class StatusBarPanel implements IStatusBarPanel {
             this._nesConfig.nextCursorPredictionEnabled = enabled;
             return;
         }
-        const config = vscode.workspace.getConfiguration('localalot.nextEditSuggestions', {
+        const config = getLocalConfiguration('localalot.nextEditSuggestions', {
             uri: document.uri, languageId: document.languageId,
         });
         const inspected = config.inspect<boolean>('extendedRange');
@@ -526,7 +537,7 @@ export class StatusBarPanel implements IStatusBarPanel {
     private async _setMenuInlineSuggestionsEnabled(enabled: boolean): Promise<void> {
         const document = vscode.window.activeTextEditor?.document;
         if (!document) return;
-        const config = vscode.workspace.getConfiguration('localalot', document.uri);
+        const config = getLocalConfiguration('localalot', document.uri);
         const current = config.get<Record<string, boolean> | boolean>('enable', { '*': true });
         await this._writeEnabledConfig(enabledConfigAfterMenuToggle(current, document.languageId, enabled), config);
     }
@@ -534,7 +545,7 @@ export class StatusBarPanel implements IStatusBarPanel {
     private async _setLanguageEnabled(enabled: boolean): Promise<void> {
         const document = vscode.window.activeTextEditor?.document;
         if (!document) return;
-        const config = vscode.workspace.getConfiguration('localalot', document.uri);
+        const config = getLocalConfiguration('localalot', document.uri);
         const current = config.get<Record<string, boolean> | boolean>('enable', { '*': true });
         const currentObject: Record<string, boolean> = typeof current === 'boolean' ? { '*': current } : { ...current };
         currentObject[document.languageId] = enabled;

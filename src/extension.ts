@@ -84,15 +84,15 @@ export function activate(context: vscode.ExtensionContext) {
     }
     // The editor's inline rename processor calls these original command IDs.
     // This contribution owns its own lifetime so model changes cannot remove them.
-    if (!vscode.extensions.getExtension('GitHub.copilot-chat')) {
-        try {
-            const native = __non_webpack_require__(path.join(context.extensionPath, 'dist', 'native-core.js')) as {
-                createLocalNesRenameContribution(context: vscode.ExtensionContext): vscode.Disposable;
-            };
-            context.subscriptions.push(native.createLocalNesRenameContribution(context));
-        } catch (error) {
-            logService.error(`Original NES rename commands failed to start: ${String(error)}`);
-        }
+    // Keep Localalot's TypeScript NES rename commands independent of the
+    // GitHub Copilot / Copilot Chat extension and its enablement state.
+    try {
+        const native = __non_webpack_require__(path.join(context.extensionPath, 'dist', 'native-core.js')) as {
+            createLocalNesRenameContribution(context: vscode.ExtensionContext): vscode.Disposable;
+        };
+        context.subscriptions.push(native.createLocalNesRenameContribution(context));
+    } catch (error) {
+        logService.error(`Original NES rename commands failed to start: ${String(error)}`);
     }
     if (nativeNesRuntime?.handlesCompletions) invalidateGhost();
     let nesEnabled = nesConfig.enabled;

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../src/config/compatConfiguration';
 import { ImportChanges } from '../vendor/copilot/src/platform/inlineEdits/common/dataTypes/importFilteringOptions';
 import { LINT_OPTIONS_VALIDATOR } from '../vendor/copilot/src/platform/inlineEdits/common/dataTypes/xtabPromptOptions';
 
@@ -14,7 +15,7 @@ export function configureLocalNesSettings(readNextCursorEnabled?: () => boolean)
 export function localNextCursorPredictionEnabled(): boolean {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
-        const config = vscode.workspace.getConfiguration('localalot.nextEditSuggestions', {
+        const config = getLocalConfiguration('localalot.nextEditSuggestions', {
             uri: editor.document.uri, languageId: editor.document.languageId,
         });
         const inspected = config.inspect<boolean>('extendedRange');
@@ -24,30 +25,30 @@ export function localNextCursorPredictionEnabled(): boolean {
         if (hasLanguageOverride) return config.get<boolean>('extendedRange', true);
     }
     return nextCursorEnabled?.()
-        ?? vscode.workspace.getConfiguration('localalot.nes').get<boolean>('nextCursorPredictionEnabled', true);
+        ?? getLocalConfiguration('localalot.nes').get<boolean>('nextCursorPredictionEnabled', true);
 }
 
 export function localNextCursorPredictionModel(): string {
-    const config = vscode.workspace.getConfiguration('localalot.nes');
+    const config = getLocalConfiguration('localalot.nes');
     return config.get<string>('nextCursorPrediction.model', '').trim()
         || config.get<string>('model', 'gpt-4o');
 }
 
 export function localNesSemanticContextEnabled(): boolean {
-    return vscode.workspace.getConfiguration('localalot.nes').get<boolean>('semanticContextEnabled', true);
+    return getLocalConfiguration('localalot.nes').get<boolean>('semanticContextEnabled', true);
 }
 
 export function localNesNeighborFilesEnabled(): boolean {
-    return vscode.workspace.getConfiguration('localalot.nes').get<boolean>('neighborFilesEnabled', true);
+    return getLocalConfiguration('localalot.nes').get<boolean>('neighborFilesEnabled', true);
 }
 
 export function localNesDiagnosticFixesEnabled(): boolean {
-    return vscode.workspace.getConfiguration('localalot.nes').get<boolean>('diagnosticFixesEnabled', true);
+    return getLocalConfiguration('localalot.nes').get<boolean>('diagnosticFixesEnabled', true);
 }
 
 /** The original timeout provider supplies nearby diagnostics when lint prompt context is unused. */
 export function localNesDiagnosticContextEnabled(): boolean {
-    const config = vscode.workspace.getConfiguration('localalot.nes');
+    const config = getLocalConfiguration('localalot.nes');
     const lintOptions = config.get<unknown>('lintOptions', {});
     const usesLintPrompt = lintOptions !== null && typeof lintOptions === 'object'
         && Object.keys(lintOptions).length > 0
@@ -59,14 +60,14 @@ export function localNesDiagnosticContextEnabled(): boolean {
 export function localNesAllowWhitespaceOnlyChanges(uri: string): boolean {
     const document = vscode.workspace.textDocuments.find(candidate => candidate.uri.toString() === uri);
     const scope = document ?? vscode.Uri.parse(uri);
-    return vscode.workspace.getConfiguration('localalot.nes', scope)
+    return getLocalConfiguration('localalot.nes', scope)
         .get<boolean>('allowWhitespaceOnlyChanges', true);
 }
 
 export function localNesImportChanges(uri: string): ImportChanges {
     const document = vscode.workspace.textDocuments.find(candidate => candidate.uri.toString() === uri);
     const scope = document ?? vscode.Uri.parse(uri);
-    return vscode.workspace.getConfiguration('localalot.nes', scope)
+    return getLocalConfiguration('localalot.nes', scope)
         .get<boolean>('allowImportChanges', true) ? ImportChanges.All : ImportChanges.None;
 }
 

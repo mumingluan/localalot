@@ -1,5 +1,6 @@
 import type { ExtensionContext, InlineCompletionItemProvider } from 'vscode';
 import { IAuthenticationService } from '../vendor/copilot/src/platform/authentication/common/authentication';
+import { IConfigurationService } from '../vendor/copilot/src/platform/configuration/common/configurationService';
 import { IDiffService } from '../vendor/copilot/src/platform/diff/common/diffService';
 import { DiffServiceImpl } from '../vendor/copilot/src/platform/diff/node/diffServiceImpl';
 import { IEndpointProvider } from '../vendor/copilot/src/platform/endpoint/common/endpointProvider';
@@ -40,6 +41,7 @@ import { configureLocalNesSettings, localNesDiagnosticFixesEnabled } from './loc
 import { registerLocalLanguageContext } from './localLanguageContext';
 import { registerOriginalTypeScriptContext } from './originalTypeScriptContext';
 import { reportLocalRequestStatus } from './localRequestStatus';
+import { LocalConfigurationService } from './localConfigurationService';
 
 /** Constructs the original NES model and inline provider without its chat/Agent contribution list. */
 export function createLocalNesProvider(
@@ -59,6 +61,8 @@ export function createLocalNesProvider(
     let lastRequest: { markdownContent?: () => unknown } | undefined;
     const ignoreService = new LocalIgnoreService();
     registerCommonServices(builder, context);
+    // Keep all upstream NES gates independent of GitHub Copilot's enablement.
+    builder.define(IConfigurationService, new SyncDescriptor(LocalConfigurationService));
     builder.define(IExperimentationService, new NullExperimentationService());
     builder.define(ITelemetryService, new NullTelemetryService());
     builder.define(IAuthenticationService, {

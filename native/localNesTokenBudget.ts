@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../src/config/compatConfiguration';
 import { GlobalBudgetOptions } from '../vendor/copilot/src/platform/inlineEdits/common/dataTypes/xtabPromptOptions';
 
 export interface LocalNesTokenBudget {
@@ -32,7 +33,7 @@ export function localNesTokenBudget(contextWindow: number, outputLimit: number):
 }
 
 export function localNesGlobalBudget(upstream: GlobalBudgetOptions | undefined): GlobalBudgetOptions | undefined {
-    const config = vscode.workspace.getConfiguration('localalot.nes.capabilities.limits');
+    const config = getLocalConfiguration('localalot.nes.capabilities.limits');
     const budget = localNesTokenBudget(
         config.get<number>('max_context_window_tokens', 128000),
         config.get<number>('max_output_tokens', 9216),

@@ -1,5 +1,6 @@
 import type { ExtensionContext, InlineCompletionItemProvider } from 'vscode';
 import { IAuthenticationService } from '../vendor/copilot/src/platform/authentication/common/authentication';
+import { IConfigurationService } from '../vendor/copilot/src/platform/configuration/common/configurationService';
 import { IRequestLogger } from '../vendor/copilot/src/platform/requestLogger/common/requestLogger';
 import { ILanguageContextProviderService, ProviderTarget } from '../vendor/copilot/src/platform/languageContextProvider/common/languageContextProviderService';
 import { IIgnoreService } from '../vendor/copilot/src/platform/ignore/common/ignoreService';
@@ -26,6 +27,8 @@ import { LocalIgnoreService } from './localIgnoreService';
 import { registerLocalLanguageContext } from './localLanguageContext';
 import { registerOriginalTypeScriptContext } from './originalTypeScriptContext';
 import { reportLocalRequestStatus } from './localRequestStatus';
+import { LocalConfigurationService } from './localConfigurationService';
+import { LocalCompletionsConfigProvider } from './localCompletionsConfig';
 
 /** Only provides the interfaces needed by the original completion pipeline. */
 export function createLocalGhostProvider(
@@ -42,6 +45,9 @@ export function createLocalGhostProvider(
     const builder = new InstantiationServiceBuilder();
     let lastRequest: { markdownContent?: () => unknown } | undefined;
     registerCommonServices(builder, context);
+    // The upstream provider must use Localalot enablement even when the
+    // GitHub Copilot extension or its settings are disabled.
+    builder.define(IConfigurationService, new SyncDescriptor(LocalConfigurationService));
     const languageContextService = new LanguageContextProviderService();
     const ignoreService = new LocalIgnoreService();
     builder.define(ILanguageContextProviderService, languageContextService);
@@ -77,7 +83,8 @@ export function createLocalGhostProvider(
         store.add(registerLocalLanguageContext(languageContextService, ProviderTarget.Completions, ignoreService));
         store.add(registerOriginalTypeScriptContext(root, languageContextService, ProviderTarget.Completions));
         store.add(root.createInstance(ScmContextProviderContribution));
-        const completions = root.invokeFunction(createContext, store, readOptions);
+        const completionsConfig = store.add(new LocalCompletionsConfigProvider());
+        const completions = root.invokeFunction(createContext, store, completionsConfig, readOptions);
         completions.invokeFunction(setup, store);
         completions.invokeFunction(accessor => {
             accessor.get(ICompletionsDefaultContextProviders).add('localalot.semantic-context-provider');

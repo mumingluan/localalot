@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../src/config/compatConfiguration';
 import { Features } from '../vendor/copilot/src/extension/completions-core/vscode-node/lib/src/experiments/features';
 import type { TelemetryWithExp } from '../vendor/copilot/src/extension/completions-core/vscode-node/lib/src/telemetry';
 import {
@@ -9,7 +10,7 @@ import {
 /** Keeps the original Ghost feature logic while using the selected local model's context window. */
 export class LocalGhostFeatures extends Features {
     override maxPromptCompletionTokens(telemetry: TelemetryWithExp): number {
-        const limits = vscode.workspace.getConfiguration('localalot.ghost.capabilities.limits');
+        const limits = getLocalConfiguration('localalot.ghost.capabilities.limits');
         const defaultWindow = DEFAULT_MAX_PROMPT_LENGTH + DEFAULT_MAX_COMPLETION_LENGTH;
         const window = limits.get<number>('max_context_window_tokens', defaultWindow);
         if (!Number.isFinite(window) || window < 1024) return super.maxPromptCompletionTokens(telemetry);

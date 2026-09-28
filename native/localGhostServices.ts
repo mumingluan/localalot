@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../src/config/compatConfiguration';
 import { CopilotToken, createTestExtendedTokenInfo } from '../vendor/copilot/src/platform/authentication/common/copilotToken';
 import { Event } from '../vendor/copilot/src/util/vs/base/common/event';
 import type { ICompletionsCopilotTokenManager } from '../vendor/copilot/src/extension/completions-core/vscode-node/lib/src/auth/copilotTokenManager';
@@ -25,11 +26,11 @@ export class LocalModelManager implements ICompletionsModelManagerService {
     readonly onDidChangeModels = Event.None;
 
     private get modelId(): string {
-        return vscode.workspace.getConfiguration('localalot.ghost').get<string>('model', '') || 'local-model';
+        return getLocalConfiguration('localalot.ghost').get<string>('model', '') || 'local-model';
     }
 
     private get tokenizer(): TokenizerName {
-        return vscode.workspace.getConfiguration('localalot.ghost')
+        return getLocalConfiguration('localalot.ghost')
             .get<TokenizerName>('tokenizer', TokenizerName.o200k) === TokenizerName.cl100k
             ? TokenizerName.cl100k : TokenizerName.o200k;
     }

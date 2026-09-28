@@ -9,7 +9,7 @@ Localalot is a VS Code extension project for inline completions, next edits, and
 - Local model transport for OpenAI Completions, FIM Completions, Chat Completions, OpenAI Responses, and Anthropic Messages.
 - No Agent, Copilot chat panel, inline chat, or sidebar contribution.
 
-The model and prompt logic is kept in `vendor/copilot/src`. Localalot's code supplies configuration, VS Code lifecycle bridges, and local endpoint adapters.
+The model and prompt logic is kept in `vendor/copilot/src`. Localalot's code supplies configuration, VS Code lifecycle bridges, and local endpoint adapters. It does not require GitHub Copilot or GitHub Copilot Chat to be installed, signed in, or active.
 
 ## Quick Start
 
@@ -18,6 +18,8 @@ The model and prompt logic is kept in `vendor/copilot/src`. Localalot's code sup
 3. Open the directory in VS Code and run `npm run compile`.
 4. Launch the extension with **Run Extension**, or package it with your own VSIX workflow.
 5. Configure `localalot.ghost.baseUrl` and `localalot.nes.baseUrl`, then set the model names.
+
+Existing `cc-completion.*` settings are read as a compatibility fallback. A value explicitly set under `localalot.*` takes precedence; menu edits write the new `localalot.*` namespace.
 
 For local testing, the endpoint value is relative to each configured base URL. For example, with `localalot.ghost.baseUrl` set to `http://127.0.0.1:8000/v1`, `localalot.ghost.endpoint` can be `chat/completions`, `responses`, or `messages`.
 
@@ -78,4 +80,4 @@ npm ci
 npm run compile
 ```
 
-Open this directory in VS Code and launch **Run Extension**. Settings and commands use the `localalot` prefix, so this extension can be tested alongside `copilot-completion` without sharing command IDs.
+Open this directory in VS Code and launch **Run Extension**. Settings and commands use the `localalot` prefix, so this extension can be tested alongside `copilot-completion` without sharing command IDs. To test standalone behavior, disable GitHub Copilot and Copilot Chat; Localalot continues to register its own Ghost, NES, context, diagnostics, cursor prediction, and rename providers.

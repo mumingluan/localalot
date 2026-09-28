@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from './compatConfiguration';
 import { ILogService } from '../completions/shared/log/logService';
 
 export interface ParsedFragment {
@@ -98,7 +99,7 @@ export class WordPatternManager {
 
         const disposables: vscode.Disposable[] = [
             vscode.workspace.onDidChangeConfiguration(e => {
-                if (e.affectsConfiguration('localalot.wordPatterns')) {
+                if (e.affectsConfiguration('localalot.wordPatterns') || e.affectsConfiguration('cc-completion.wordPatterns')) {
                     void this.applyAll();
                 }
             }),
@@ -133,7 +134,7 @@ export class WordPatternManager {
     }
 
     private _getConfig(): Record<string, string> {
-        return vscode.workspace.getConfiguration('localalot')
+        return getLocalConfiguration('localalot')
             .get<Record<string, string>>('wordPatterns', {});
     }
 

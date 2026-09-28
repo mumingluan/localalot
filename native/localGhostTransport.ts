@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../src/config/compatConfiguration';
 import { setTimeout as wait } from 'node:timers/promises';
 import { iterateSSEStream } from '../src/completions/shared/llm/sseStream';
 import { OpenAIResponseAdapter } from '../src/completions/shared/llm/openaiResponseAdapter';
@@ -31,7 +32,7 @@ export interface LocalGhostTransportOptions {
 }
 
 function currentOptions(): LocalGhostTransportOptions {
-    const config = vscode.workspace.getConfiguration('localalot.ghost');
+    const config = getLocalConfiguration('localalot.ghost');
     return {
         baseUrl: config.get<string>('baseUrl', ''),
         apiKey: config.get<string>('apiKey', ''),

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../../config/compatConfiguration';
 
 /** Native Copilot skips editor surfaces without useful source context. */
 const ignoredUriSchemes = new Set([
@@ -47,7 +48,7 @@ export function isEligibleForInlineCompletion(
         uri: document.uri, languageId: document.languageId,
     }).get<boolean>('enabled', true) === false) return false;
 
-    const configuration = vscode.workspace.getConfiguration('localalot', document.uri);
+    const configuration = getLocalConfiguration('localalot', document.uri);
     const enabled = configuration.get<Record<string, boolean> | boolean>('enable', { '*': true });
     if (!ignoreLanguageSetting
         && (typeof enabled === 'boolean' ? !enabled : !(enabled[document.languageId] ?? enabled['*'] ?? true))) {
@@ -61,7 +62,7 @@ export function isEligibleForInlineCompletion(
 export function isUnavailableForInlineCompletion(document: vscode.TextDocument): boolean {
     if (ignoredUriSchemes.has(document.uri.scheme)) return true;
     if (!['file', 'vscode-remote', 'vscode-vfs'].includes(document.uri.scheme)) return false;
-    return isExcludedByConfiguration(document, vscode.workspace.getConfiguration('localalot', document.uri));
+    return isExcludedByConfiguration(document, getLocalConfiguration('localalot', document.uri));
 }
 
 function isExcludedByConfiguration(document: vscode.TextDocument, configuration: vscode.WorkspaceConfiguration): boolean {
@@ -71,7 +72,7 @@ function isExcludedByConfiguration(document: vscode.TextDocument, configuration:
 /** Check the same exclusion rules before adding a file to native prompt context. */
 export function isUriExcludedByConfiguration(
     uri: vscode.Uri,
-    configuration = vscode.workspace.getConfiguration('localalot', uri),
+    configuration = getLocalConfiguration('localalot', uri),
 ): boolean {
     // Explorer and Search visibility do not disable native Copilot completions.
     // Only the extension's explicit exclusion setting controls eligibility.

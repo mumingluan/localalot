@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../src/config/compatConfiguration';
 import { randomUUID } from 'crypto';
 import type { Raw } from '@vscode/prompt-tsx';
 import { ChatFetchResponseType, ChatResponse } from '../vendor/copilot/src/platform/chat/common/commonTypes';
@@ -32,7 +33,7 @@ export interface LocalNesEndpointOptions {
 }
 
 function currentOptions(): LocalNesEndpointOptions {
-    const config = vscode.workspace.getConfiguration('localalot.nes');
+    const config = getLocalConfiguration('localalot.nes');
     return {
         model: config.get<string>('model', 'gpt-4o'),
         baseUrl: config.get<string>('baseUrl', ''),

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalSetting } from '../src/config/compatConfiguration';
 import type { Copilot } from '../vendor/copilot/src/platform/inlineCompletions/common/api';
 import { ProviderTarget, type ILanguageContextProviderService } from '../vendor/copilot/src/platform/languageContextProvider/common/languageContextProviderService';
 import { ContextKind, KnownSources, TriggerKind, type ContextItem, type RequestContext } from '../vendor/copilot/src/platform/languageServer/common/languageContextService';
@@ -55,7 +56,7 @@ export function registerOriginalTypeScriptContext(
         let pending: NodeJS.Timeout | undefined;
         const schedule = (document: vscode.TextDocument, position: vscode.Position) => {
             if (disposed || document.uri.scheme !== 'file'
-                || !vscode.workspace.getConfiguration().get<boolean>(setting, true)
+                || !getLocalSetting<boolean>(setting, true)
                 || !['typescript', 'typescriptreact'].includes(document.languageId)) return;
             if (pending) clearTimeout(pending);
             pending = setTimeout(() => {
@@ -103,7 +104,7 @@ export function registerOriginalTypeScriptContext(
             ],
             resolver: {
                 resolve: async (request, token) => {
-                    if (!vscode.workspace.getConfiguration().get<boolean>(setting, true)) return [];
+                    if (!getLocalSetting<boolean>(setting, true)) return [];
                     const document = vscode.workspace.textDocuments.find(open =>
                         open.uri.toString() === request.documentContext.uri);
                     if (!document || document.version !== request.documentContext.version

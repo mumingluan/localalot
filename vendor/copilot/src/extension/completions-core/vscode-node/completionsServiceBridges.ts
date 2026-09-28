@@ -69,7 +69,7 @@ import { ICompletionsPromiseQueueService, PromiseQueue } from './lib/src/util/pr
 import { ICompletionsRuntimeModeService, RuntimeMode } from './lib/src/util/runtimeMode';
 
 /** @public */
-export function createContext(serviceAccessor: ServicesAccessor, store: DisposableStore): IInstantiationService {
+export function createContext(serviceAccessor: ServicesAccessor, store: DisposableStore, configProvider?: ICompletionsConfigProvider): IInstantiationService {
 	const logService = serviceAccessor.get(ILogService);
 
 	const serviceCollection = new ServiceCollection();
@@ -89,7 +89,7 @@ export function createContext(serviceAccessor: ServicesAccessor, store: Disposab
 
 	serviceCollection.set(ICompletionsRuntimeModeService, RuntimeMode.fromEnvironment(false));
 	serviceCollection.set(ICompletionsCacheService, new CompletionsCache());
-	serviceCollection.set(ICompletionsConfigProvider, new VSCodeConfigProvider());
+	serviceCollection.set(ICompletionsConfigProvider, configProvider ?? new VSCodeConfigProvider());
 	serviceCollection.set(ICompletionsLastGhostText, new LastGhostText());
 	serviceCollection.set(ICompletionsCurrentGhostText, new CurrentGhostText());
 	serviceCollection.set(ICompletionsSpeculativeRequestCache, new SpeculativeRequestCache());

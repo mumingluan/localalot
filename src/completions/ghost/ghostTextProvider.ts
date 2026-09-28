@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../../config/compatConfiguration';
 import { IInstantiationService } from '../../di/instantiation';
 import { IGhostConfigProvider } from '../../config/ghostConfig';
 import { ILogService } from '../shared/log/logService';
@@ -28,7 +29,7 @@ export function shouldRespectSelectedCompletionInfo(resource: vscode.Uri): boole
     const quickSuggestionsDisabled = quickSuggestions.get('other') !== 'on'
         && quickSuggestions.get('comments') !== 'on'
         && quickSuggestions.get('strings') !== 'on';
-    const completionConfig = vscode.workspace.getConfiguration('localalot', resource);
+    const completionConfig = getLocalConfiguration('localalot', resource);
     const inspected = completionConfig.inspect<boolean>('respectSelectedCompletionInfo');
     // VS Code supplies an implicit `false` default for a boolean setting even
     // when package.json has no default. Use the dynamic native default unless
@@ -147,7 +148,7 @@ export class GhostTextProvider implements IGhostTextProvider, vscode.InlineCompl
                     this._onDidChange.fire();
                 }
             }, 120);
-            if (!vscode.workspace.getConfiguration('localalot.ghost', event.document.uri).get('speculativePrefetch', true)) return;
+            if (!getLocalConfiguration('localalot.ghost', event.document.uri).get('speculativePrefetch', true)) return;
             if (!isEligibleForInlineCompletion(event.document)) return;
             if (this._prefetchTimer) clearTimeout(this._prefetchTimer);
             this._prefetchGeneration++;
@@ -222,7 +223,7 @@ export class GhostTextProvider implements IGhostTextProvider, vscode.InlineCompl
         const isCycling = context.triggerKind === vscode.InlineCompletionTriggerKind.Invoke;
         if (!this._config.enabled || shouldSkipAutomaticCompletionOnMeteredConnection(context.triggerKind)
             || !isEligibleForInlineCompletion(document, isCycling)
-            || (context.selectedCompletionInfo && vscode.workspace.getConfiguration('localalot', document.uri).get('ignoreWhenSuggestVisible', false))) {
+            || (context.selectedCompletionInfo && getLocalConfiguration('localalot', document.uri).get('ignoreWhenSuggestVisible', false))) {
             this._log.debug(`[GHOST] DISABLED`);
             return undefined;
         }
@@ -347,7 +348,7 @@ export class GhostTextProvider implements IGhostTextProvider, vscode.InlineCompl
             || !this._config.enabled
             || shouldSkipAutomaticCompletionOnMeteredConnection(vscode.InlineCompletionTriggerKind.Automatic)
             || !isEligibleForInlineCompletion(editor.document)
-            || !vscode.workspace.getConfiguration('localalot.ghost', editor.document.uri).get('speculativePrefetch', true)) return;
+            || !getLocalConfiguration('localalot.ghost', editor.document.uri).get('speculativePrefetch', true)) return;
         this._prefetchGeneration++;
         const generation = this._prefetchGeneration;
         this._prefetchCts?.cancel();

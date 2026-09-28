@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../src/config/compatConfiguration';
 import { IInlineEditsModelService } from '../vendor/copilot/src/platform/inlineEdits/common/inlineEditsModelService';
 import {
     applyStrategyConfig, isPromptingStrategy, LINT_OPTIONS_VALIDATOR,
@@ -19,7 +20,7 @@ export class LocalNesModelService implements IInlineEditsModelService {
     );
 
     private get modelId(): string {
-        return vscode.workspace.getConfiguration('localalot.nes').get<string>('model', 'gpt-4o');
+        return getLocalConfiguration('localalot.nes').get<string>('model', 'gpt-4o');
     }
 
     get modelInfo() {
@@ -32,12 +33,12 @@ export class LocalNesModelService implements IInlineEditsModelService {
     async setCurrentModelId(modelId: string): Promise<void> {
         const normalized = modelId.trim();
         if (!normalized) return;
-        const config = vscode.workspace.getConfiguration('localalot.nes');
+        const config = getLocalConfiguration('localalot.nes');
         await config.update('model', normalized, modelSettingScope(config.inspect<string>('model')));
     }
 
     selectedModelConfiguration(): ModelConfiguration {
-        const config = vscode.workspace.getConfiguration('localalot.nes');
+        const config = getLocalConfiguration('localalot.nes');
         const configuredStrategy = config.get<string>('promptingStrategy', PromptingStrategy.Xtab275);
         const rawLintOptions = config.get<unknown>('lintOptions', {});
         const checkedLintOptions = LINT_OPTIONS_VALIDATOR.validate(rawLintOptions);

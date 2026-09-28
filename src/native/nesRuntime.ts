@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../config/compatConfiguration';
 import { INesConfigProvider } from '../config/nesConfig';
 import { isEligibleForInlineCompletion } from '../completions/shared/documentEligibility';
 import { ILogService } from '../completions/shared/log/logService';
@@ -49,10 +50,15 @@ export class NativeNesRuntime implements vscode.Disposable {
         this._listeners.push(this._config.onDidChangeEnabled(() => this.invalidateCachedEdits()));
         this._listeners.push(vscode.workspace.onDidChangeConfiguration(event => {
             if (event.affectsConfiguration('localalot.nes')
+                || event.affectsConfiguration('cc-completion.nes')
                 || event.affectsConfiguration('localalot.nextEditSuggestions.enabled')
                 || event.affectsConfiguration('localalot.nextEditSuggestions.extendedRange')
+                || event.affectsConfiguration('localalot.nextEditSuggestions.eagerness')
+                || event.affectsConfiguration('cc-completion.nextEditSuggestions.eagerness')
                 || event.affectsConfiguration('localalot.enable')
-                || event.affectsConfiguration('localalot.exclude')) {
+                || event.affectsConfiguration('cc-completion.enable')
+                || event.affectsConfiguration('localalot.exclude')
+                || event.affectsConfiguration('cc-completion.exclude')) {
                 this.invalidateCachedEdits();
             }
         }));

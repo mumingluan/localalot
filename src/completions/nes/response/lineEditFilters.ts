@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../../../config/compatConfiguration';
 import { LineReplacement } from './lineReplacement';
 
 export function allowWhitespaceOnlyChanges(document: vscode.TextDocument): boolean {
-    return vscode.workspace.getConfiguration('localalot.nes', {
+    return getLocalConfiguration('localalot.nes', {
         uri: document.uri, languageId: document.languageId,
     }).get<boolean>('allowWhitespaceOnlyChanges', true);
 }
 
 export function allowImportChanges(document: vscode.TextDocument): boolean {
-    return vscode.workspace.getConfiguration('localalot.nes', {
+    return getLocalConfiguration('localalot.nes', {
         uri: document.uri, languageId: document.languageId,
     }).get<boolean>('allowImportChanges', true);
 }

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { createServiceIdentifier } from '../di/services';
 import { ConfigKeys } from './configKeys';
+import { getLocalSetting } from './compatConfiguration';
 
 export type GhostEndpoint = 'completions' | 'fim/completions' | 'chat/completions' | 'responses' | 'messages';
 export type GhostContextPlacement = 'extra' | 'prefix';
@@ -53,7 +54,7 @@ export class VSCodeGhostConfigProvider implements IGhostConfigProvider {
     constructor(private readonly _context: vscode.ExtensionContext) {
         _context.subscriptions.push(
             vscode.workspace.onDidChangeConfiguration(e => {
-                if (e.affectsConfiguration('localalot.ghost')) {
+                if (e.affectsConfiguration('localalot.ghost') || e.affectsConfiguration('cc-completion.ghost')) {
                     this._cache.clear();
                     this._revision++;
                 }
@@ -65,7 +66,7 @@ export class VSCodeGhostConfigProvider implements IGhostConfigProvider {
         if (this._cache.has(key)) {
             return this._cache.get(key) as T;
         }
-        const value = vscode.workspace.getConfiguration().get<T>(key, defaultValue);
+        const value = getLocalSetting<T>(key, defaultValue);
         this._cache.set(key, value);
         return value;
     }

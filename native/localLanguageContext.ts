@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalSetting } from '../src/config/compatConfiguration';
 import type { Copilot } from '../vendor/copilot/src/platform/inlineCompletions/common/api';
 import { ProviderTarget, type ILanguageContextProviderService } from '../vendor/copilot/src/platform/languageContextProvider/common/languageContextProviderService';
 import type { IIgnoreService } from '../vendor/copilot/src/platform/ignore/common/ignoreService';
@@ -20,7 +21,7 @@ export function registerLocalLanguageContext(
             resolve: async (request, token) => {
                 const setting = target === ProviderTarget.NES
                     ? 'localalot.nes.semanticContextEnabled' : 'localalot.ghost.semanticContextEnabled';
-                if (!vscode.workspace.getConfiguration().get<boolean>(setting, true)) return [];
+                if (!getLocalSetting<boolean>(setting, true)) return [];
                 const doc = vscode.workspace.textDocuments.find(candidate =>
                     candidate.uri.toString() === request.documentContext.uri);
                 if (!doc || doc.version !== request.documentContext.version || token.isCancellationRequested) {

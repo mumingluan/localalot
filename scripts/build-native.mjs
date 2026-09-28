@@ -280,8 +280,8 @@ await build({
                     + `import { LocalGhostFeatures } from '${relative('native/localGhostFeatures.ts')}';\n`
                     + source;
                 source = replaceOnce(source,
-                    'export function createContext(serviceAccessor: ServicesAccessor, store: DisposableStore): IInstantiationService {',
-                    'export function createContext(serviceAccessor: ServicesAccessor, store: DisposableStore, readOptions?: () => import("'
+                    'export function createContext(serviceAccessor: ServicesAccessor, store: DisposableStore, configProvider?: ICompletionsConfigProvider): IInstantiationService {',
+                    'export function createContext(serviceAccessor: ServicesAccessor, store: DisposableStore, configProvider?: ICompletionsConfigProvider, readOptions?: () => import("'
                         + relative('native/localGhostTransport.ts') + '").LocalGhostTransportOptions): IInstantiationService {');
                 source = replaceOnce(source, 'new SyncDescriptor(CopilotTokenManagerImpl, [false])', 'new LocalTokenManager()');
                 source = replaceOnce(source, 'new SyncDescriptor(AvailableModelsManager, [true])', 'new LocalModelManager()');

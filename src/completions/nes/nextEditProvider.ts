@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../../config/compatConfiguration';
 import { registerInlineCompletionProvider } from '../shared/inlineRegistration';
 import { IInstantiationService } from '../../di/instantiation';
 import { INesConfigProvider } from '../../config/nesConfig';
@@ -83,7 +84,7 @@ export class NextEditProvider implements INesProvider, vscode.InlineCompletionIt
     setCurrentModelId = async (modelId: string): Promise<void> => {
         const normalized = modelId.trim();
         if (!normalized || normalized === this._config.model) return;
-        const config = vscode.workspace.getConfiguration('localalot.nes');
+        const config = getLocalConfiguration('localalot.nes');
         const target = modelSettingScope(config.inspect<string>('model'));
         await config.update('model', normalized, target);
         this._onDidChangeModelInfo.fire();
@@ -369,7 +370,7 @@ export class NextEditProvider implements INesProvider, vscode.InlineCompletionIt
         // if this item cannot itself be projected.
         this._cancelSpeculativePrefetch();
         if (shouldSkipAutomaticCompletionOnMeteredConnection(vscode.InlineCompletionTriggerKind.Automatic)) return;
-        if (!vscode.workspace.getConfiguration('localalot.nes', item.info?.document.uri).get('speculativePrefetch', true)) return;
+        if (!getLocalConfiguration('localalot.nes', item.info?.document.uri).get('speculativePrefetch', true)) return;
         const targetDocument = item.info?.document;
         if (!targetDocument || !isEligibleForInlineCompletion(targetDocument)) return;
         const projected = projectAcceptedNesItem(targetDocument, item, updatedInsertText);
@@ -420,7 +421,7 @@ export class NextEditProvider implements INesProvider, vscode.InlineCompletionIt
     ): Promise<NesCompletionList | undefined> {
         if (!this._config.enabled || shouldSkipAutomaticCompletionOnMeteredConnection(context.triggerKind)
             || !isEligibleForInlineCompletion(document)
-            || (context.selectedCompletionInfo && vscode.workspace.getConfiguration('localalot', document.uri).get('ignoreWhenSuggestVisible', false))) {
+            || (context.selectedCompletionInfo && getLocalConfiguration('localalot', document.uri).get('ignoreWhenSuggestVisible', false))) {
             this._log.debug(`[NES]  DISABLED`);
             return undefined;
         }

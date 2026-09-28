@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { getLocalConfiguration } from '../config/compatConfiguration';
 import { IGhostConfigProvider } from '../config/ghostConfig';
 import { isEligibleForInlineCompletion } from '../completions/shared/documentEligibility';
 import { ILogService } from '../completions/shared/log/logService';
@@ -44,12 +45,20 @@ export class NativeGhostRuntime implements vscode.Disposable {
         this._listeners.push(this._config.onDidChangeEnabled(() => this.invalidateCachedCompletions()));
         this._listeners.push(vscode.workspace.onDidChangeConfiguration(event => {
             if (event.affectsConfiguration('localalot.ghost')
+                || event.affectsConfiguration('cc-completion.ghost')
+                || event.affectsConfiguration('localalot.advanced')
+                || event.affectsConfiguration('cc-completion.advanced')
                 || event.affectsConfiguration('localalot.nes.promptingStrategy')
                 || event.affectsConfiguration('localalot.nes.baseUrl')
                 || event.affectsConfiguration('localalot.nes.endpoint')
                 || event.affectsConfiguration('localalot.enable')
+                || event.affectsConfiguration('cc-completion.enable')
                 || event.affectsConfiguration('localalot.exclude')
+                || event.affectsConfiguration('cc-completion.exclude')
+                || event.affectsConfiguration('localalot.ignoreWhenSuggestVisible')
+                || event.affectsConfiguration('cc-completion.ignoreWhenSuggestVisible')
                 || event.affectsConfiguration('localalot.respectSelectedCompletionInfo')
+                || event.affectsConfiguration('cc-completion.respectSelectedCompletionInfo')
                 || event.affectsConfiguration('editor.quickSuggestions')) {
                 this.invalidateCachedCompletions();
             }
@@ -88,7 +97,7 @@ export class NativeGhostRuntime implements vscode.Disposable {
                         if (!this._config.enabled || !this._config.endpointConfigured
                             || this._nesHandlesCompletions()
                             || !isEligibleForInlineCompletion(document)) return undefined;
-                        if (vscode.workspace.getConfiguration('localalot', document.uri)
+                        if (getLocalConfiguration('localalot', document.uri)
                             .get<boolean>('ignoreWhenSuggestVisible', false) && context.selectedCompletionInfo) return undefined;
                         const version = document.version;
                         return waitForIgnoreRules(instance.whenReady(), token).then(ready => {
