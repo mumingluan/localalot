@@ -282,10 +282,10 @@ await build({
                 source = replaceOnce(source,
                     'export function createContext(serviceAccessor: ServicesAccessor, store: DisposableStore, configProvider?: ICompletionsConfigProvider): IInstantiationService {',
                     'export function createContext(serviceAccessor: ServicesAccessor, store: DisposableStore, configProvider?: ICompletionsConfigProvider, readOptions?: () => import("'
-                        + relative('native/localGhostTransport.ts') + '").LocalGhostTransportOptions): IInstantiationService {');
+                        + relative('native/localGhostTransport.ts') + '").LocalGhostTransportOptions, onRequestError?: (message: string) => void): IInstantiationService {');
                 source = replaceOnce(source, 'new SyncDescriptor(CopilotTokenManagerImpl, [false])', 'new LocalTokenManager()');
                 source = replaceOnce(source, 'new SyncDescriptor(AvailableModelsManager, [true])', 'new LocalModelManager()');
-                source = replaceOnce(source, 'new SyncDescriptor(LiveOpenAIFetcher)', 'new LocalGhostTransport(readOptions)');
+                source = replaceOnce(source, 'new SyncDescriptor(LiveOpenAIFetcher)', 'new LocalGhostTransport(readOptions, onRequestError)');
                 source = replaceOnce(source, 'new SyncDescriptor(Features)', 'new SyncDescriptor(LocalGhostFeatures)');
                 source = replaceOnce(source,
                     "import { ICompletionsStatusReporter } from './lib/src/progress';",

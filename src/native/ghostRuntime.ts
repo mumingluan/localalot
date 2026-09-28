@@ -17,7 +17,11 @@ interface NativeGhostInstance extends vscode.Disposable {
 }
 
 interface NativeGhostModule {
-    createLocalGhostProvider(context: vscode.ExtensionContext): NativeGhostInstance;
+    createLocalGhostProvider(
+        context: vscode.ExtensionContext,
+        readOptions?: () => unknown,
+        onRequestError?: (message: string) => void,
+    ): NativeGhostInstance;
 }
 
 /** Registers the original Ghost provider with Localalot's enablement and endpoint settings. */
@@ -84,7 +88,11 @@ export class NativeGhostRuntime implements vscode.Disposable {
         }
         const file = path.join(this._context.extensionPath, 'dist', 'native-core.js');
         const native = __non_webpack_require__(file) as NativeGhostModule;
-        const instance = native.createLocalGhostProvider(this._context);
+        const instance = native.createLocalGhostProvider(
+            this._context,
+            undefined,
+            message => this._log.error(message),
+        );
         const provider = new Proxy(instance.provider, {
             get: (target, key) => {
                 if (key === 'provideInlineCompletionItems') {

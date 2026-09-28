@@ -34,6 +34,7 @@ import { LocalCompletionsConfigProvider } from './localCompletionsConfig';
 export function createLocalGhostProvider(
     context: ExtensionContext,
     readOptions?: () => LocalGhostTransportOptions,
+    onRequestError?: (message: string) => void,
 ): {
     provider: InlineCompletionItemProvider;
     ready: Promise<void>;
@@ -84,7 +85,7 @@ export function createLocalGhostProvider(
         store.add(registerOriginalTypeScriptContext(root, languageContextService, ProviderTarget.Completions));
         store.add(root.createInstance(ScmContextProviderContribution));
         const completionsConfig = store.add(new LocalCompletionsConfigProvider());
-        const completions = root.invokeFunction(createContext, store, completionsConfig, readOptions);
+        const completions = root.invokeFunction(createContext, store, completionsConfig, readOptions, onRequestError);
         completions.invokeFunction(setup, store);
         completions.invokeFunction(accessor => {
             accessor.get(ICompletionsDefaultContextProviders).add('localalot.semantic-context-provider');

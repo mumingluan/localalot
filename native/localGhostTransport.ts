@@ -93,7 +93,18 @@ export class LocalGhostTransport implements ICompletionsOpenAIFetcherService {
     declare readonly _serviceBrand: undefined;
     private nextRequestAt = 0;
 
-    constructor(private readonly readOptions: () => LocalGhostTransportOptions = currentOptions) { }
+    constructor(
+        private readonly readOptions: () => LocalGhostTransportOptions = currentOptions,
+        private readonly onRequestError?: (message: string) => void,
+    ) { }
+
+    private reportError(message: string): void {
+        try {
+            this.onRequestError?.(message);
+        } catch {
+            // Logging must not affect completion requests.
+        }
+    }
 
     async fetchAndStreamCompletions(
         params: CompletionParams,
@@ -199,7 +210,11 @@ export class LocalGhostTransport implements ICompletionsOpenAIFetcherService {
                             reportLocalRequestStatus('ghost', 'Local completion endpoint returned no choices', statusRequest);
                         }
                     } catch (error) {
-                        if (!controller.signal.aborted) reportLocalRequestStatus('ghost', String(error), statusRequest);
+                        if (!controller.signal.aborted) {
+                            const message = String(error);
+                            reportLocalRequestStatus('ghost', message, statusRequest);
+                            this.reportError(message);
+                        }
                         throw error;
                     } finally {
                         cancellation?.dispose();
@@ -265,6 +280,7 @@ export class LocalGhostTransport implements ICompletionsOpenAIFetcherService {
                 cancellation?.dispose();
                 const reason = httpFailureReason(response.status, detail);
                 reportLocalRequestStatus('ghost', reason, statusRequest);
+                this.reportError(reason);
                 return { type: 'failed', reason };
             }
 
@@ -296,7 +312,11 @@ export class LocalGhostTransport implements ICompletionsOpenAIFetcherService {
                         reportLocalRequestStatus('ghost', receivedChoices ? undefined : 'Local completion endpoint returned no choices', statusRequest);
                     }
                 } catch (error) {
-                    if (!controller.signal.aborted) reportLocalRequestStatus('ghost', String(error), statusRequest);
+                    if (!controller.signal.aborted) {
+                        const message = String(error);
+                        reportLocalRequestStatus('ghost', message, statusRequest);
+                        this.reportError(message);
+                    }
                     throw error;
                 } finally {
                     cancellation?.dispose();
@@ -318,8 +338,10 @@ export class LocalGhostTransport implements ICompletionsOpenAIFetcherService {
         } catch (error) {
             cancellation?.dispose();
             if (controller.signal.aborted) return { type: 'canceled', reason: 'local request canceled' };
-            reportLocalRequestStatus('ghost', String(error), statusRequest);
-            return { type: 'failed', reason: String(error) };
+            const message = String(error);
+            reportLocalRequestStatus('ghost', message, statusRequest);
+            this.reportError(message);
+            return { type: 'failed', reason: message };
         }
     }
 }
