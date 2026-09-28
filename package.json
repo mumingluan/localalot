@@ -8,7 +8,12 @@
   },
   "buildType": "dev",
   "publisher": "young-triangle",
+  "homepage": "https://github.com/mumingluan/localalot",
   "license": "SEE LICENSE IN LICENSE.txt",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mumingluan/localalot.git"
+  },
   "categories": [
     "AI",
     "Programming Languages"
