@@ -35,29 +35,38 @@ export function getLocalConfiguration(
             || inspected.globalValue !== undefined;
     };
 
-    return new Proxy(local, {
-        get(target, property, receiver) {
-            if (property === 'get') {
-                return <T>(key: string, defaultValue?: T): T => {
-                    if (hasUserValue(target, key)) return target.get<T>(key, defaultValue as T);
-                    if (hasUserValue(legacy, key)) return legacy.get<T>(key, defaultValue as T);
-                    return target.get<T>(key, defaultValue as T);
-                };
-            }
-            if (property === 'has') {
-                return (key: string): boolean => target.has(key) || legacy.has(key);
-            }
-            if (property === 'inspect') {
-                return <T>(key: string) => {
-                    if (hasUserValue(target, key)) return target.inspect<T>(key);
-                    if (hasUserValue(legacy, key)) return legacy.inspect<T>(key);
-                    return target.inspect<T>(key);
-                };
-            }
-            const value = Reflect.get(target, property, receiver);
-            return typeof value === 'function' ? value.bind(target) : value;
+    // WorkspaceConfiguration is a host object whose methods can be
+    // non-configurable. A Proxy cannot safely replace those methods on newer
+    // VS Code versions, so use a facade with the native configuration as its
+    // prototype and shadow only the compatibility methods.
+    const compatibility = Object.create(local) as vscode.WorkspaceConfiguration;
+    Object.defineProperties(compatibility, {
+        get: {
+            enumerable: true,
+            value: <T>(key: string, defaultValue?: T): T => {
+                if (hasUserValue(local, key)) return local.get<T>(key, defaultValue as T);
+                if (hasUserValue(legacy, key)) return legacy.get<T>(key, defaultValue as T);
+                return local.get<T>(key, defaultValue as T);
+            },
+        },
+        has: {
+            enumerable: true,
+            value: (key: string): boolean => local.has(key) || legacy.has(key),
+        },
+        inspect: {
+            enumerable: true,
+            value: <T>(key: string) => {
+                if (hasUserValue(local, key)) return local.inspect<T>(key);
+                if (hasUserValue(legacy, key)) return legacy.inspect<T>(key);
+                return local.inspect<T>(key);
+            },
+        },
+        update: {
+            enumerable: true,
+            value: local.update.bind(local),
         },
     });
+    return compatibility;
 }
 
 /** Reads a fully-qualified Localalot key with cc-completion fallback. */
@@ -65,4 +74,23 @@ export function getLocalSetting<T>(key: string, defaultValue: T, scope?: vscode.
     const separator = key.lastIndexOf('.');
     if (separator <= 0) return vscode.workspace.getConfiguration().get<T>(key, defaultValue);
     return getLocalConfiguration(key.slice(0, separator), scope).get<T>(key.slice(separator + 1), defaultValue);
+}
+
+/** Resolve the Ghost IntelliSense preview setting with its dynamic default. */
+export function getLocalRespectSelectedCompletionInfo(
+    scope: vscode.ConfigurationScope | undefined,
+    defaultValue: boolean,
+): boolean {
+    const config = getLocalConfiguration('localalot', scope);
+    const inspected = config.inspect<boolean>('respectSelectedCompletionInfo');
+    const configured = inspected && [
+        inspected.defaultLanguageValue,
+        inspected.globalValue,
+        inspected.workspaceValue,
+        inspected.workspaceFolderValue,
+        inspected.globalLanguageValue,
+        inspected.workspaceLanguageValue,
+        inspected.workspaceFolderLanguageValue,
+    ].some(value => value !== undefined);
+    return configured ? config.get('respectSelectedCompletionInfo', defaultValue) : defaultValue;
 }

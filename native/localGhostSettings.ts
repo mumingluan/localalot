@@ -1,18 +1,15 @@
 import * as vscode from 'vscode';
-import { getLocalConfiguration } from '../src/config/compatConfiguration';
+import { getLocalRespectSelectedCompletionInfo } from '../src/config/compatConfiguration';
 
 /** Keep Copilot's dynamic IntelliSense default when Localalot has no explicit override. */
 export function localRespectSelectedCompletionInfo(defaultValue: boolean): boolean {
-    const config = getLocalConfiguration('localalot');
-    const inspected = config.inspect<boolean>('respectSelectedCompletionInfo');
-    const configured = inspected && [
-        inspected.defaultLanguageValue,
-        inspected.globalValue,
-        inspected.workspaceValue,
-        inspected.workspaceFolderValue,
-        inspected.globalLanguageValue,
-        inspected.workspaceLanguageValue,
-        inspected.workspaceFolderLanguageValue,
-    ].some(value => value !== undefined);
-    return configured ? config.get('respectSelectedCompletionInfo', defaultValue) : defaultValue;
+    return getLocalRespectSelectedCompletionInfo(undefined, defaultValue);
+}
+
+/** Resolve the same setting for an editor resource, including language overrides. */
+export function localRespectSelectedCompletionInfoForScope(
+    scope: vscode.ConfigurationScope | undefined,
+    defaultValue: boolean,
+): boolean {
+    return getLocalRespectSelectedCompletionInfo(scope, defaultValue);
 }

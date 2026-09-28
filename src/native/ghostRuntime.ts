@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { getLocalConfiguration } from '../config/compatConfiguration';
+import { getLocalConfiguration, getLocalRespectSelectedCompletionInfo } from '../config/compatConfiguration';
 import { IGhostConfigProvider } from '../config/ghostConfig';
 import { isEligibleForInlineCompletion } from '../completions/shared/documentEligibility';
 import { ILogService } from '../completions/shared/log/logService';
@@ -106,7 +106,23 @@ export class NativeGhostRuntime implements vscode.Disposable {
                                 || !this._config.enabled || !this._config.endpointConfigured
                                 || this._nesHandlesCompletions()
                                 || !isEligibleForInlineCompletion(document)) return undefined;
-                            return target.provideInlineCompletionItems(document, position, withNativeInlineContext(context), token);
+                            const nativeContext = withNativeInlineContext(context);
+                            // The upstream bridge reads github.copilot.* directly.
+                            // Resolve the equivalent Localalot setting here so
+                            // IntelliSense preview behavior remains independent
+                            // when Copilot is disabled or uninstalled.
+                            const quickSuggestions = vscode.workspace.getConfiguration('editor.quickSuggestions', {
+                                uri: document.uri,
+                                languageId: document.languageId,
+                            });
+                            const quickSuggestionsDisabled = quickSuggestions.get('other') !== 'on'
+                                && quickSuggestions.get('comments') !== 'on'
+                                && quickSuggestions.get('strings') !== 'on';
+                            const requestContext = getLocalRespectSelectedCompletionInfo(
+                                document.uri,
+                                quickSuggestionsDisabled,
+                            ) ? nativeContext : { ...nativeContext, selectedCompletionInfo: undefined };
+                            return target.provideInlineCompletionItems(document, position, requestContext, token);
                         });
                     };
                 }
