@@ -1132,6 +1132,7 @@ suite('Original Copilot provider bootstrap', () => {
                 provider: {
                     provideInlineCompletionItems(...args: unknown[]): Promise<{ items: Array<{ insertText: string }> } | undefined>;
                 };
+                ready: Promise<void>;
                 getLastRequestLog(): unknown;
                 dispose(): void;
             };
@@ -1153,6 +1154,7 @@ suite('Original Copilot provider bootstrap', () => {
         }));
         const token = new vscode.CancellationTokenSource();
         try {
+            await instance.ready;
             const doc = await vscode.workspace.openTextDocument({ language: 'yaml', content: 'services:\n  web:' });
             const result = await instance.provider.provideInlineCompletionItems(
                 doc, new vscode.Position(1, 6),
