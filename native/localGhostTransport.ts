@@ -163,6 +163,10 @@ export class LocalGhostTransport implements ICompletionsOpenAIFetcherService {
                 ? Math.max(1, Math.floor(options.maxOutputTokens)) : 500;
             const maxTokens = Math.min(outputLimit, params.postOptions?.max_tokens ?? outputLimit);
             const stop = options.stops.length ? options.stops : params.postOptions?.stop ?? getStops(params.languageId);
+            // Most local OpenAI-compatible servers expose only one completion.
+            // Copilot's pipeline commonly asks for three candidates, which makes
+            // those servers reject the otherwise valid request with HTTP 400.
+            const completionCount = 1;
             if (options.endpoint === 'responses' || options.endpoint === 'messages') {
                 const request: LLMRequest = {
                     model: options.model || params.engineModelId,
@@ -237,7 +241,7 @@ export class LocalGhostTransport implements ICompletionsOpenAIFetcherService {
                 max_tokens: maxTokens,
                 temperature: params.postOptions?.temperature ?? (params.count > 1 ? 0.2 : 0),
                 top_p: params.postOptions?.top_p ?? 1,
-                n: params.postOptions?.n ?? params.count,
+                n: completionCount,
                 stop,
                 presence_penalty: options.presencePenalty ?? 0,
                 frequency_penalty: options.frequencyPenalty ?? 0,
@@ -250,7 +254,7 @@ export class LocalGhostTransport implements ICompletionsOpenAIFetcherService {
                 max_tokens: maxTokens,
                 temperature: params.postOptions?.temperature ?? (params.count > 1 ? 0.2 : 0),
                 top_p: params.postOptions?.top_p ?? 1,
-                n: params.postOptions?.n ?? params.count,
+                n: completionCount,
                 stop,
                 presence_penalty: options.presencePenalty ?? 0,
                 frequency_penalty: options.frequencyPenalty ?? 0,
