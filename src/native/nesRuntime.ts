@@ -54,6 +54,7 @@ export class NativeNesRuntime implements vscode.Disposable {
                 || event.affectsConfiguration('localalot.nextEditSuggestions.enabled')
                 || event.affectsConfiguration('localalot.nextEditSuggestions.extendedRange')
                 || event.affectsConfiguration('localalot.nextEditSuggestions.eagerness')
+                || event.affectsConfiguration('localalot.nextEditSuggestions.triggerOnEditorChangeAfterSeconds')
                 || event.affectsConfiguration('cc-completion.nextEditSuggestions.eagerness')
                 || event.affectsConfiguration('localalot.enable')
                 || event.affectsConfiguration('cc-completion.enable')

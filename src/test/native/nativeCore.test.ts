@@ -12,6 +12,17 @@ import { createStableAcceptanceBridge } from '../../completions/shared/inlineReg
 const execFileAsync = promisify(execFile);
 
 suite('Original Copilot core bundle', () => {
+    test('is independently activatable when GitHub Copilot is disabled', () => {
+        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        assert.ok(extension);
+        const packageJson = extension.packageJSON as {
+            activationEvents?: string[];
+            extensionDependencies?: string[];
+        };
+        assert.ok(packageJson.activationEvents?.includes('onStartupFinished'));
+        assert.deepStrictEqual(packageJson.extensionDependencies ?? [], []);
+    });
+
     test('related files cache follows the provider and current ignore rules', async () => {
         const native = require('../../../dist/native-core.js') as {
             getRelatedFilesAndTraits(...args: unknown[]): Promise<{

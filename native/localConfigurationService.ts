@@ -68,6 +68,16 @@ export class LocalConfigurationService extends ConfigurationServiceImpl implemen
                 return { handled: true, value: getLocalConfiguration('localalot.nes', scope).get('allowWhitespaceOnlyChanges', true) };
             case ConfigKey.InlineEditsAggressiveness:
                 return { handled: true, value: getLocalConfiguration('localalot.nextEditSuggestions', scope).get('eagerness', 'auto') };
+            case ConfigKey.Advanced.InlineEditsTriggerOnEditorChangeAfterSeconds: {
+                const value = getLocalConfiguration('localalot.nextEditSuggestions', scope)
+                    .get<number | null>('triggerOnEditorChangeAfterSeconds', 10);
+                return { handled: true, value: value === null ? undefined : value };
+            }
+            case ConfigKey.Advanced.InlineEditsNextCursorPredictionCurrentFileMaxTokens:
+                return {
+                    handled: true,
+                    value: getLocalConfiguration('localalot.nes.nextCursorPrediction').get('currentFileMaxTokens', 3000),
+                };
             case ConfigKey.TeamInternal.InlineEditsIgnoreCompletionsDisablement:
                 return { handled: true, value: false };
             case ConfigKey.TeamInternal.InlineEditsInlineCompletionsEnabled:
@@ -77,7 +87,7 @@ export class LocalConfigurationService extends ConfigurationServiceImpl implemen
             case ConfigKey.TeamInternal.InlineEditsNesMimicGhostTextBehavior:
                 return { handled: true, value: getLocalConfiguration('localalot.nes', scope).get('mimicGhostTextBehavior', false) };
             case ConfigKey.InlineEditsRenameSymbolSuggestions:
-                return { handled: true, value: true };
+                return { handled: true, value: getLocalConfiguration('localalot.nes').get('renameSymbolSuggestions', true) };
             case ConfigKey.DiagnosticsContextProvider:
                 return { handled: true, value: getLocalConfiguration('localalot.nes', scope).get('diagnosticContextEnabled', true) };
             default:

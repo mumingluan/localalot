@@ -376,6 +376,15 @@
           "default": true,
           "description": "Enable original Copilot predicted cursor jumps for this language. The bottom-right toggle remains a workspace fallback when no language override is set."
         },
+        "localalot.nextEditSuggestions.triggerOnEditorChangeAfterSeconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "default": 10,
+          "description": "Trigger the original NES workflow after switching editors within this many seconds of an edit. Set to null to disable editor-switch triggering."
+        },
         "localalot.nes.stream": {
           "type": "boolean",
           "default": true,
@@ -497,6 +506,17 @@
           "type": "string",
           "default": "",
           "description": "Model for the original next-cursor predictor. Empty uses localalot.nes.model."
+        },
+        "localalot.nes.nextCursorPrediction.currentFileMaxTokens": {
+          "type": "number",
+          "minimum": 1,
+          "default": 3000,
+          "description": "Maximum tokens from the current file included in the original predicted-cursor prompt."
+        },
+        "localalot.nes.renameSymbolSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable original NES rename-symbol suggestions."
         },
         "localalot.nes.semanticContextEnabled": {
           "type": "boolean",
