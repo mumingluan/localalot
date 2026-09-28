@@ -7,7 +7,7 @@
     "vscode": "^1.132.0"
   },
   "buildType": "dev",
-  "publisher": "young-triangle",
+  "publisher": "mumingluan",
   "homepage": "https://github.com/mumingluan/localalot",
   "license": "SEE LICENSE IN LICENSE.txt",
   "repository": {

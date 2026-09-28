@@ -9,7 +9,7 @@ import * as path from 'path';
 
 suite('StatusBarPanel', () => {
     test('command palette can enable, disable, and toggle original inline suggestions', async () => {
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         await extension.activate();
         const document = await vscode.workspace.openTextDocument({ language: 'yaml', content: 'services:\n  web:' });

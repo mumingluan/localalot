@@ -52,7 +52,7 @@ suite('Local Copilot ignore bridge', () => {
 
     test('refreshes prompt state when .copilotignore changes', async function () {
         this.timeout(10000);
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const folder = vscode.workspace.getWorkspaceFolder(extension.extensionUri);
         assert.ok(folder?.uri.scheme === 'file');
@@ -98,7 +98,7 @@ suite('Local Copilot ignore bridge', () => {
 
     test('loads and refreshes original .copilotignore rules', async function () {
         this.timeout(20000);
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(extension.extensionUri);
         assert.ok(workspaceFolder?.uri.scheme === 'file', 'This test needs the extension project as a workspace');

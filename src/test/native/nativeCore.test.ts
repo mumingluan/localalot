@@ -13,7 +13,7 @@ const execFileAsync = promisify(execFile);
 
 suite('Original Copilot core bundle', () => {
     test('is independently activatable when GitHub Copilot is disabled', () => {
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const packageJson = extension.packageJSON as {
             activationEvents?: string[];
@@ -207,7 +207,7 @@ suite('Original Copilot core bundle', () => {
             } finally {
                 contextToken.dispose();
             }
-            const extension = vscode.extensions.getExtension('young-triangle.localalot');
+            const extension = vscode.extensions.getExtension('mumingluan.localalot');
             assert.ok(extension);
             await extension.activate();
             const commands = await vscode.commands.getCommands(true);
@@ -861,7 +861,7 @@ suite('Original Copilot provider bootstrap', () => {
         const settings = vscode.workspace.getConfiguration('localalot.ghost.capabilities.limits');
         const previousWindow = settings.inspect<number>('max_context_window_tokens')?.globalValue;
         const previousOutput = settings.inspect<number>('max_output_tokens')?.globalValue;
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const native = require('../../../dist/native-core.js') as {
             createLocalGhostProvider(context: unknown, options: () => unknown): {
@@ -910,7 +910,7 @@ suite('Original Copilot provider bootstrap', () => {
     });
 
     test('is the active Ghost provider in Localalot', async () => {
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const api = await extension.activate() as { ghostCore?: string; nesCore?: string } | undefined;
         assert.strictEqual(api?.ghostCore, 'native');
@@ -921,7 +921,7 @@ suite('Original Copilot provider bootstrap', () => {
         const native = require('../../../dist/native-core.js') as {
             createLocalGhostProvider(context: unknown): { provider: unknown; dispose(): void };
         };
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const context = {
             extension,
@@ -950,7 +950,7 @@ suite('Original Copilot provider bootstrap', () => {
                 dispose(): void;
             };
         };
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const config = vscode.workspace.getConfiguration('localalot');
         const previous = config.inspect<boolean>('respectSelectedCompletionInfo')?.globalValue;
@@ -1016,7 +1016,7 @@ suite('Original Copilot provider bootstrap', () => {
                 dispose(): void;
             };
         };
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const context = {
             extension, extensionUri: extension.extensionUri, extensionPath: extension.extensionPath,
@@ -1092,7 +1092,7 @@ suite('Original Copilot provider bootstrap', () => {
             const native = require('../../../dist/native-core.js') as {
                 createLocalGhostProvider(context: unknown, options: () => unknown): typeof instance;
             };
-            const extension = vscode.extensions.getExtension('young-triangle.localalot');
+            const extension = vscode.extensions.getExtension('mumingluan.localalot');
             assert.ok(extension);
             content = vscode.workspace.registerTextDocumentContentProvider('vscode-scm', {
                 provideTextDocumentContent: () => 'Update staged value ',
@@ -1148,7 +1148,7 @@ suite('Original Copilot provider bootstrap', () => {
                 dispose(): void;
             };
         };
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const context = {
             extension,
@@ -1213,7 +1213,7 @@ suite('Original Copilot provider bootstrap', () => {
         await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
         const address = server.address();
         assert.ok(address && typeof address !== 'string');
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const subscriptions: vscode.Disposable[] = [];
         const native = require('../../../dist/native-core.js') as {
@@ -1268,7 +1268,7 @@ suite('Original Copilot provider bootstrap', () => {
         await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
         const address = server.address();
         assert.ok(address && typeof address !== 'string');
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const subscriptions: vscode.Disposable[] = [];
         const native = require('../../../dist/native-core.js') as {
@@ -1434,7 +1434,7 @@ suite('Original Copilot NES bootstrap', () => {
             await config.update('baseUrl', `http://127.0.0.1:${address.port}`, vscode.ConfigurationTarget.Global);
             await config.update('endpoint', 'chat/completions', vscode.ConfigurationTarget.Global);
             await config.update('model', 'local-unified', vscode.ConfigurationTarget.Global);
-            const extension = vscode.extensions.getExtension('young-triangle.localalot');
+            const extension = vscode.extensions.getExtension('mumingluan.localalot');
             assert.ok(extension);
             const native = require('../../../dist/native-core.js') as {
                 createLocalNesProvider(context: unknown, cursorEnabled: () => boolean): typeof instance;
@@ -1485,7 +1485,7 @@ suite('Original Copilot NES bootstrap', () => {
     });
 
     test('passes original prompt strategy and lint settings to the NES model', async () => {
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const config = vscode.workspace.getConfiguration('localalot.nes');
         const previous = {
@@ -1547,7 +1547,7 @@ suite('Original Copilot NES bootstrap', () => {
 
     test('feeds nearby VS Code diagnostics into the original NES context once', async function () {
         this.timeout(10000);
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const config = vscode.workspace.getConfiguration('localalot.nes');
         const previousContext = config.inspect<boolean>('diagnosticContextEnabled')?.globalValue;
@@ -1601,7 +1601,7 @@ suite('Original Copilot NES bootstrap', () => {
 
     test('turns a VS Code import diagnostic into an original NES fix', async function () {
         this.timeout(10000);
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const config = vscode.workspace.getConfiguration('localalot.nes');
         const previous = config.inspect<boolean>('diagnosticFixesEnabled')?.globalValue;
@@ -1698,7 +1698,7 @@ suite('Original Copilot NES bootstrap', () => {
                 dispose(): void;
             };
         };
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const config = vscode.workspace.getConfiguration('localalot.nes');
         const previous = config.inspect<boolean>('diagnosticFixesEnabled')?.globalValue;
@@ -1745,7 +1745,7 @@ suite('Original Copilot NES bootstrap', () => {
             endpoint: config.inspect<string>('endpoint')?.globalValue,
             whitespace: config.inspect<boolean>('allowWhitespaceOnlyChanges')?.globalLanguageValue,
         };
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const native = require('../../../dist/native-core.js') as {
             createLocalNesProvider(context: unknown, cursorEnabled: () => boolean): {
@@ -1819,7 +1819,7 @@ suite('Original Copilot NES bootstrap', () => {
             endpoint: config.inspect<string>('endpoint')?.globalValue,
             imports: config.inspect<boolean>('allowImportChanges')?.globalLanguageValue,
         };
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const native = require('../../../dist/native-core.js') as {
             createLocalNesProvider(context: unknown, cursorEnabled: () => boolean): {
@@ -1914,7 +1914,7 @@ suite('Original Copilot NES bootstrap', () => {
             await config.update('model', 'local-nes', vscode.ConfigurationTarget.Global);
             await config.update('endpoint', 'chat/completions', vscode.ConfigurationTarget.Global);
             await config.update('nextCursorPrediction.model', 'local-cursor', vscode.ConfigurationTarget.Global);
-            const extension = vscode.extensions.getExtension('young-triangle.localalot');
+            const extension = vscode.extensions.getExtension('mumingluan.localalot');
             assert.ok(extension);
             const native = require('../../../dist/native-core.js') as { createLocalNesProvider(context: unknown, cursorEnabled: () => boolean): typeof instance };
             instance = native.createLocalNesProvider({
@@ -1998,7 +1998,7 @@ suite('Original Copilot NES bootstrap', () => {
             await config.update('lintOptions', { maxLints: 5 }, vscode.ConfigurationTarget.Global);
             await config.update('capabilities.limits.max_context_window_tokens', 4096, vscode.ConfigurationTarget.Global);
             await config.update('capabilities.limits.max_output_tokens', 9216, vscode.ConfigurationTarget.Global);
-            const extension = vscode.extensions.getExtension('young-triangle.localalot');
+            const extension = vscode.extensions.getExtension('mumingluan.localalot');
             assert.ok(extension);
             const context = {
                 extension,
@@ -2128,7 +2128,7 @@ suite('Original Copilot NES bootstrap', () => {
         const native = require('../../../dist/native-core.js') as {
             createLocalNesProvider(context: unknown): { provider: unknown; dispose(): void };
         };
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const context = {
             extension,
@@ -2153,7 +2153,7 @@ suite('Original Copilot NES bootstrap', () => {
             uri: document.uri, languageId: document.languageId,
         });
         const previous = config.inspect<boolean>('enabled')?.globalLanguageValue;
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const subscriptions: vscode.Disposable[] = [];
         let instance: { provider: {
@@ -2193,7 +2193,7 @@ suite('Original Copilot NES bootstrap', () => {
     test('reads Localalot eagerness through the original NES provider options', async () => {
         const config = vscode.workspace.getConfiguration('localalot.nextEditSuggestions');
         const previous = config.inspect<string>('eagerness')?.globalValue;
-        const extension = vscode.extensions.getExtension('young-triangle.localalot');
+        const extension = vscode.extensions.getExtension('mumingluan.localalot');
         assert.ok(extension);
         const subscriptions: vscode.Disposable[] = [];
         let instance: { provider: { providerOptions?: Array<{ id: string; currentValueId: string }> }; dispose(): void } | undefined;

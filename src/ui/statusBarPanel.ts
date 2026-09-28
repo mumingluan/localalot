@@ -118,7 +118,7 @@ export class StatusBarPanel implements IStatusBarPanel {
             }),
             vscode.commands.registerCommand('localalot.changeCompletionModels', () => this._showModelPicker()),
             vscode.commands.registerCommand('localalot.openSettings', () =>
-                vscode.commands.executeCommand('workbench.action.openSettings', '@ext:young-triangle.localalot')),
+                vscode.commands.executeCommand('workbench.action.openSettings', '@ext:mumingluan.localalot')),
             vscode.commands.registerCommand('localalot.clearCache', () => {
                 this._clearCaches();
             }),
@@ -336,7 +336,7 @@ export class StatusBarPanel implements IStatusBarPanel {
         else if (picks === changeModel) await this._showModelPicker();
         else if (picks === eagerness) await this._showEagernessPicker();
         else if (picks === configureEndpoints) {
-            await vscode.commands.executeCommand('workbench.action.openSettings', '@ext:young-triangle.localalot baseUrl');
+            await vscode.commands.executeCommand('workbench.action.openSettings', '@ext:mumingluan.localalot baseUrl');
         }
         else if (picks === clearCache) {
             this._clearCaches();
