@@ -1,0 +1,278 @@
+import { LineRange, LineReplacement } from './lineReplacement';
+
+/** Minimum number of "significant" (alphanumeric) lines that must match consecutively to converge. */
+const N_SIGNIFICANT_LINES_TO_CONVERGE = 2;
+/** Minimum total number of lines that must match consecutively to converge. */
+const N_LINES_TO_CONVERGE = 3;
+
+/**
+ * Equivalent of the reference's ResponseProcessor.diff().
+ *
+ * Algorithm (synchronous adaptation of the reference streaming diff):
+ * 1. Walk both arrays position-by-position.
+ * 2. When lines match: advance both pointers.
+ * 3. When mismatch: accumulate response lines and check for convergence —
+ *    the suffix of accumulated lines must match multiple consecutive original
+ *    lines (with at least N_SIGNIFICANT_LINES_TO_CONVERGE significant matches
+ *    or N_LINES_TO_CONVERGE total matches) before the divergence is closed.
+ * 4. If no convergence found (end of one array), emit the remaining divergence.
+ */
+export class ResponseDiffer {
+
+    compute(originalLines: string[], responseLines: string[]): LineReplacement[] {
+        return this._compute(originalLines, responseLines, true);
+    }
+
+    /** Edits anchored by later matching lines; safe to show before the response ends. */
+    computeConverged(originalLines: string[], completedResponseLines: string[]): LineReplacement[] {
+        return this._compute(originalLines, completedResponseLines, false);
+    }
+
+    /** Native NES can emit an additive cursor-line change without an anchor. */
+    computeFastCursorLine(
+        originalLines: string[],
+        completedResponseLines: string[],
+        cursorLineOffset: number,
+        nextDocumentLine?: string,
+    ): LineReplacement | undefined {
+        if (cursorLineOffset < 0 || cursorLineOffset >= originalLines.length
+            || completedResponseLines.length <= cursorLineOffset) return undefined;
+        for (let i = 0; i < cursorLineOffset; i++) {
+            if (completedResponseLines[i] !== originalLines[i]) return undefined;
+        }
+        const original = originalLines[cursorLineOffset];
+        const replacement = completedResponseLines[cursorLineOffset];
+        if (replacement === original || originalLines.includes(replacement)
+            || !isSubsequence(original, replacement)) return undefined;
+        if (original.trim() === '') {
+            const nextLine = originalLines[cursorLineOffset + 1] ?? nextDocumentLine;
+            if (nextLine !== undefined && (replacement === nextLine || nextLine.startsWith(replacement))) return undefined;
+        }
+        return new LineReplacement({
+            startLineNumber: cursorLineOffset + 1,
+            endLineNumberExclusive: cursorLineOffset + 2,
+        }, [replacement]);
+    }
+
+    private _compute(originalLines: string[], responseLines: string[], includeTrailingEdit: boolean): LineReplacement[] {
+        const lineToIdxs = buildLineIndex(originalLines);
+        const edits: LineReplacement[] = [];
+        let origIdx = 0;
+        let respIdx = 0;
+
+        while (origIdx < originalLines.length || respIdx < responseLines.length) {
+            // Both sides have lines and they match → advance
+            if (origIdx < originalLines.length && respIdx < responseLines.length
+                && originalLines[origIdx] === responseLines[respIdx]) {
+                origIdx++;
+                respIdx++;
+                continue;
+            }
+
+            // Divergence: accumulate response lines, checking for convergence
+            const divergenceStart = origIdx;
+            const newLines: string[] = [];
+            let converged = false;
+
+            while (respIdx < responseLines.length) {
+                newLines.push(responseLines[respIdx]);
+                respIdx++;
+
+                const conv = tryConverge(originalLines, divergenceStart, newLines, lineToIdxs);
+                if (conv) {
+                    const insertLines = newLines.slice(0, newLines.length - conv.nConvergingLines);
+                    edits.push(new LineReplacement(
+                        {
+                            startLineNumber: divergenceStart + 1, // 1-based
+                            endLineNumberExclusive: conv.origConvIdx + 1,
+                        },
+                        insertLines,
+                    ));
+                    origIdx = conv.origConvIdx + conv.nConvergingLines;
+                    converged = true;
+                    break;
+                }
+            }
+
+            // Handle exhaustion only when convergence was not reached
+            if (!converged) {
+                if (!includeTrailingEdit) break;
+                if (respIdx >= responseLines.length && origIdx < originalLines.length) {
+                    edits.push(new LineReplacement(
+                        {
+                            startLineNumber: divergenceStart + 1,
+                            endLineNumberExclusive: originalLines.length + 1,
+                        },
+                        newLines,
+                    ));
+                    origIdx = originalLines.length;
+                } else if (origIdx >= originalLines.length && respIdx < responseLines.length) {
+                    // Original exhausted but more response lines remain — pure insertion at end
+                    const insertLines = responseLines.slice(respIdx);
+                    edits.push(new LineReplacement(
+                        {
+                            startLineNumber: originalLines.length + 1,
+                            endLineNumberExclusive: originalLines.length + 1,
+                        },
+                        insertLines,
+                    ));
+                    respIdx = responseLines.length;
+                } else if (newLines.length > 0) {
+                    // Both sides exhausted with accumulated newLines that never converged
+                    edits.push(new LineReplacement(
+                        {
+                            startLineNumber: divergenceStart + 1,
+                            endLineNumberExclusive: origIdx + 1,
+                        },
+                        newLines,
+                    ));
+                }
+            }
+        }
+
+        return edits;
+    }
+}
+
+function isSignificant(s: string): boolean {
+    return /[a-zA-Z1-9]+/.test(s);
+}
+
+function isSubsequence(original: string, replacement: string): boolean {
+    let index = 0;
+    // VS Code positions and string offsets are UTF-16 code units. Iterating
+    // by code point here misses an unchanged surrogate pair (for example an
+    // emoji in a comment) and delays an otherwise safe additive preview.
+    for (let offset = 0; offset < replacement.length && index < original.length; offset++) {
+        if (replacement[offset] === original[index]) index++;
+    }
+    return index === original.length;
+}
+
+function buildLineIndex(lines: string[]): Map<string, number[]> {
+    const map = new Map<string, number[]>();
+    for (let i = 0; i < lines.length; i++) {
+        const existing = map.get(lines[i]);
+        if (existing) {
+            existing.push(i);
+        } else {
+            map.set(lines[i], [i]);
+        }
+    }
+    return map;
+}
+
+/**
+ * Checks whether the suffix of `newLines` matches consecutive lines in
+ * `originalLines` starting from `divergenceStart`. Returns the convergence
+ * point (original index where matching region starts) and the number of
+ * converging lines, or undefined if convergence criteria aren't met.
+ */
+function tryConverge(
+    originalLines: string[],
+    divergenceStart: number,
+    newLines: string[],
+    lineToIdxs: Map<string, number[]>,
+): { origConvIdx: number; nConvergingLines: number } | undefined {
+    if (newLines.length === 0) {
+        return undefined;
+    }
+
+    const lastLine = newLines[newLines.length - 1];
+    const matchIdxs = lineToIdxs.get(lastLine);
+    if (!matchIdxs || matchIdxs.length === 0) {
+        return undefined;
+    }
+
+    for (const convEndIdx of matchIdxs) {
+        if (convEndIdx < divergenceStart) {
+            continue;
+        }
+
+        const result = tryConvergeAt(originalLines, divergenceStart, newLines, convEndIdx);
+        if (result) {
+            return result;
+        }
+    }
+
+    return undefined;
+}
+
+function tryConvergeAt(
+    originalLines: string[],
+    divergenceStart: number,
+    newLines: string[],
+    convEndIdx: number,
+): { origConvIdx: number; nConvergingLines: number } | undefined {
+    const lastNewLine = newLines[newLines.length - 1];
+    let nNonSigMatches = 1;
+    let nSigMatches = isSignificant(lastNewLine) ? 1 : 0;
+
+    // When every original line from divergence to match is accounted for
+    // by the response (pure replacement, no skipping), treat as significant.
+    if (nNonSigMatches > 0 && convEndIdx - divergenceStart === newLines.length - 1) {
+        nSigMatches = Math.max(nSigMatches, N_SIGNIFICANT_LINES_TO_CONVERGE);
+    }
+
+    let newLinesIdx = newLines.length - 2;
+    let convIdx = convEndIdx - 1;
+
+    while (newLinesIdx >= 0 && convIdx >= divergenceStart) {
+        if (originalLines[convIdx] !== newLines[newLinesIdx]) {
+            break;
+        }
+
+        nNonSigMatches++;
+        if (isSignificant(newLines[newLinesIdx])) {
+            nSigMatches++;
+        }
+
+        const converged = nSigMatches >= N_SIGNIFICANT_LINES_TO_CONVERGE
+            || nNonSigMatches >= N_LINES_TO_CONVERGE;
+
+        if (converged) {
+            const nLinesToConverge = convEndIdx - convIdx + 1;
+            const nLinesRemoved = convIdx - divergenceStart;
+            const linesInserted = newLines.slice(0, newLines.length - nLinesToConverge);
+            const nLinesInserted = linesInserted.length;
+
+            // Reject convergence that removes far more original lines than inserted
+            if (nLinesRemoved - nLinesInserted > 1 && nLinesInserted > 0) {
+                return undefined;
+            }
+
+            return { origConvIdx: convIdx, nConvergingLines: nLinesToConverge };
+        }
+
+        convIdx--;
+        newLinesIdx--;
+    }
+
+    // Fallback mirroring the reference's ResponseProcessor.checkForConvergence:
+    // when every original line from divergence to the anchor match is accounted
+    // for by the response (pure replacement, no skipped lines —
+    // `convEndIdx - divergenceStart === newLines.length - 1`), the reference marks
+    // the convergence as significant BEFORE walking backwards and keeps that result
+    // even if the backward walk fails on the first step (e.g. a single-line fix
+    // re-emitted with its trailing lines). The loop above only converges inside the
+    // walk, so without this fallback the divergence would be emitted as one giant
+    // edit swallowing the rest of the edit window.
+    if (newLines.length >= 2 && nSigMatches >= N_SIGNIFICANT_LINES_TO_CONVERGE) {
+        // Converge on the anchor line alone (matches the reference's fixed
+        // `match = candidates[0]`): the trailing anchor line is preserved and only
+        // the lines before it are treated as inserted.
+        const nLinesToConverge = 1;
+        const nLinesRemoved = convEndIdx - divergenceStart;
+        const linesInserted = newLines.slice(0, newLines.length - nLinesToConverge);
+        const nLinesInserted = linesInserted.length;
+
+        // Reject convergence that removes far more original lines than inserted
+        if (nLinesRemoved - nLinesInserted > 1 && nLinesInserted > 0) {
+            return undefined;
+        }
+
+        return { origConvIdx: convEndIdx, nConvergingLines: nLinesToConverge };
+    }
+
+    return undefined;
+}

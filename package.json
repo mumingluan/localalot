@@ -1,0 +1,564 @@
+{
+  "name": "localalot",
+  "displayName": "Localalot",
+  "description": "Original Copilot inline completions and next edits with local model endpoints.",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.132.0"
+  },
+  "buildType": "dev",
+  "publisher": "young-triangle",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "categories": [
+    "AI",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "ai",
+    "completion",
+    "fim",
+    "copilot",
+    "autocomplete"
+  ],
+  "icon": "assets/copilot.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "typescriptServerPlugins": [
+      {
+        "name": "@vscode/copilot-typescript-server-plugin",
+        "enableForWorkspaceTypeScriptVersions": true
+      }
+    ],
+    "commands": [
+      {
+        "command": "localalot.togglePanel",
+        "title": "Open Localalot Completion Menu"
+      },
+      {
+        "command": "localalot.toggleLanguage",
+        "title": "Toggle Localalot Inline Suggestions for Current Language"
+      },
+      {
+        "command": "localalot.enableInlineSuggestions",
+        "title": "Enable Inline Suggestions",
+        "category": "Localalot"
+      },
+      {
+        "command": "localalot.disableInlineSuggestions",
+        "title": "Disable Inline Suggestions",
+        "category": "Localalot"
+      },
+      {
+        "command": "localalot.toggleInlineSuggestions",
+        "title": "Toggle Inline Suggestions",
+        "category": "Localalot"
+      },
+      {
+        "command": "localalot.changeCompletionModels",
+        "title": "Change Completion Models",
+        "category": "Localalot"
+      },
+      {
+        "command": "localalot.openSettings",
+        "title": "Open Localalot Completion Settings"
+      },
+      {
+        "command": "localalot.clearCache",
+        "title": "Clear Localalot Completion Cache"
+      },
+      {
+        "command": "localalot.trigger",
+        "title": "Trigger Localalot Inline Completion"
+      },
+      {
+        "command": "localalot.applyNextEdit",
+        "title": "Apply Localalot Next Edit"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "localalot.applyNextEdit",
+        "key": "tab",
+        "when": "editorTextFocus && localalot.nextEditAvailable && !editorReadonly && !editorHasSelection && !editorHasMultipleSelections && !editorTabMovesFocus && !editorHoverFocused && !suggestWidgetVisible && !inlineSuggestionVisible && !inlineEditIsVisible && !inSnippetMode"
+      }
+    ],
+    "configuration": {
+      "title": "Localalot",
+      "properties": {
+        "localalot.enable": {
+          "type": "object",
+          "default": {
+            "*": true
+          },
+          "description": "Enable inline completions by language ID. Individual languages override the * fallback.",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "localalot.exclude": {
+          "type": "array",
+          "default": [],
+          "description": "Glob patterns for files where inline completion and next edit suggestions are disabled.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "localalot.ignoreWhenSuggestVisible": {
+          "type": "boolean",
+          "default": false,
+          "description": "Temporarily hide AI inline suggestions while the regular IntelliSense suggestion list is visible."
+        },
+        "localalot.respectSelectedCompletionInfo": {
+          "type": "boolean",
+          "description": "Build ghost completions from the selected IntelliSense item while its list is open. Defaults to on only when editor quick suggestions are disabled."
+        },
+        "localalot.ghost.speculativePrefetch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Fallback Ghost provider only. The original Copilot provider manages its own speculative requests."
+        },
+        "localalot.nes.speculativePrefetch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Fallback NES provider only. The original provider needs VS Code's restricted suggestion lifecycle API for post-accept speculative requests."
+        },
+        "localalot.wordPatterns": {
+          "type": "object",
+          "default": {},
+          "description": "Per-language wordPattern additions (appended to the built-in pattern, not replacing it). Only languages with an explicit key (or the \"*\" fallback) are affected; other languages keep their native wordPattern. Keys are language IDs; \"*\" is a fallback for languages without an explicit key. Values are regex fragments, optionally wrapped as /fragment/flags (non-g flags like i/m/u are applied; the stateful g flag is stripped).",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "localalot.ghost.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "GHOST API base URL"
+        },
+        "localalot.ghost.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "GHOST API key"
+        },
+        "localalot.ghost.model": {
+          "type": "string",
+          "default": "gpt-4o",
+          "description": "GHOST model name"
+        },
+        "localalot.ghost.tokenizer": {
+          "type": "string",
+          "enum": [
+            "o200k_base",
+            "cl100k_base"
+          ],
+          "default": "o200k_base",
+          "description": "Tokenizer used by the original Ghost prompt builder to fit context within the local model window. Choose the tokenizer matching your model when available."
+        },
+        "localalot.ghost.endpoint": {
+          "type": "string",
+          "enum": [
+            "completions",
+            "fim/completions",
+            "chat/completions",
+            "responses",
+            "messages"
+          ],
+          "default": "completions",
+          "description": "Local model endpoint for Ghost inline completions. Supports OpenAI completions, FIM completions, chat completions, Responses, and Anthropic Messages. Chat-style endpoints receive the original Copilot prefix, suffix, and context as code-insertion messages."
+        },
+        "localalot.ghost.family": {
+          "type": "string",
+          "enum": ["standard", "openai-o", "openai-gpt5"],
+          "default": "standard",
+          "description": "Model family for Ghost Responses requests. OpenAI reasoning families use reasoning effort instead of sampling overrides."
+        },
+        "localalot.ghost.capabilities.supports.reasoning_effort": {
+          "type": "string",
+          "enum": ["none", "minimal", "low", "medium", "high", "xhigh"],
+          "default": "low",
+          "description": "Reasoning effort for Ghost Responses requests with an OpenAI reasoning model family. Low keeps inline suggestions responsive."
+        },
+        "localalot.ghost.contextPlacement": {
+          "type": "string",
+          "enum": [
+            "extra",
+            "prefix"
+          ],
+          "default": "prefix",
+          "description": "Where GHOST sends diagnostics, recent edits and related code. 'prefix' lets standard completion servers see this context; use 'extra' for a server that supports Copilot's extra.context field."
+        },
+        "localalot.ghost.semanticContextEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include language-server definitions, imports, and cursor symbol facts in original Copilot inline completion prompts."
+        },
+        "localalot.advanced.contextProviderTimeBudget": {
+          "type": "number",
+          "default": 750,
+          "minimum": 0,
+          "description": "Milliseconds allowed for original Copilot inline completion context providers. Higher values can improve cold language-server context at the cost of latency."
+        },
+        "localalot.ghost.stops": {
+          "type": "array",
+          "default": [],
+          "description": "Custom stop sequences for GHOST generation. Empty uses Copilot's language-specific defaults.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "localalot.ghost.promptTemplate": {
+          "type": "string",
+          "default": "<|fim_prefix|>{prefix}<|fim_suffix|>{suffix}<|fim_middle|>",
+          "description": "FIM prompt template for the /completions endpoint. Use {prefix} and {suffix} placeholders."
+        },
+        "localalot.ghost.capabilities.limits.max_output_tokens": {
+          "type": "number",
+          "default": 500,
+          "minimum": 1,
+          "description": "Maximum output tokens for GHOST requests"
+        },
+        "localalot.ghost.capabilities.limits.max_context_window_tokens": {
+          "type": "number",
+          "default": 8192,
+          "minimum": 1024,
+          "description": "Local Ghost model context window in tokens. The original Copilot prompt builder reserves output tokens within this limit."
+        },
+        "localalot.ghost.capabilities.limits.delay": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Optional minimum interval (ms) between GHOST network requests; 0 uses Copilot-style request timing"
+        },
+        "localalot.ghost.presencePenalty": {
+          "type": "number",
+          "default": 0,
+          "minimum": -2,
+          "maximum": 2,
+          "description": "Presence penalty for GHOST completions (-2.0 to 2.0). Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics."
+        },
+        "localalot.ghost.frequencyPenalty": {
+          "type": "number",
+          "default": 0,
+          "minimum": -2,
+          "maximum": 2,
+          "description": "Frequency penalty for GHOST completions (-2.0 to 2.0). Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim."
+        },
+        "localalot.ghost.stream": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable SSE streaming for GHOST completions"
+        },
+        "localalot.nes.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "NES API base URL"
+        },
+        "localalot.nes.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "NES API key"
+        },
+        "localalot.nes.model": {
+          "type": "string",
+          "default": "gpt-4o",
+          "description": "NES model name"
+        },
+        "localalot.nes.promptingStrategy": {
+          "type": "string",
+          "enum": [
+            "xtab275",
+            "copilotNesXtab",
+            "xtabUnifiedModel",
+            "codexv21nesUnified",
+            "nes41miniv3",
+            "simplifiedSystemPrompt",
+            "xtabAggressiveness",
+            "xtab275Aggressiveness",
+            "xtab275AggressivenessHighLow",
+            "patchBased",
+            "patchBased01",
+            "patchBased02",
+            "patchBased02WithRecentLineNumbers",
+            "patchBased02Unified",
+            "patchBased02UnifiedEagerness",
+            "patchBased02WithoutRecentLineNumbers",
+            "xtab275EditIntent",
+            "xtab275EditIntentShort"
+          ],
+          "default": "xtab275",
+          "description": "Original Copilot NES prompt and response format. Select the strategy expected by the local model."
+        },
+        "localalot.nes.includeTagsInCurrentFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include original NES structural tags in the current-file prompt, unless the selected strategy overrides this."
+        },
+        "localalot.nes.includePostScript": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include the original NES instruction after the code context."
+        },
+        "localalot.nes.lintOptions": {
+          "type": "object",
+          "default": {},
+          "description": "Optional original NES lint context settings. An empty object disables lint context.",
+          "additionalProperties": false,
+          "properties": {
+            "tagName": {
+              "type": "string"
+            },
+            "warnings": {
+              "type": "string",
+              "enum": [
+                "yes",
+                "no",
+                "yesIfNoErrors"
+              ]
+            },
+            "showCode": {
+              "type": "string",
+              "enum": [
+                "yes",
+                "no",
+                "yesWithSurroundingLines"
+              ]
+            },
+            "maxLints": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxLineDistance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "nRecentFiles": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "localalot.nes.diagnosticContextEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include nearby VS Code errors and warnings in the original NES context. Automatically skips this provider when lintOptions are configured."
+        },
+        "localalot.nes.mimicGhostTextBehavior": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use the original NES model's ghost-text-like display behavior when available."
+        },
+        "localalot.nextEditSuggestions.eagerness": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "auto",
+          "description": "How eagerly the original Copilot NES provider offers next edits. Also available in the bottom-right completion menu."
+        },
+        "localalot.nextEditSuggestions.enabled": {
+          "type": "boolean",
+          "scope": "language-overridable",
+          "default": true,
+          "description": "Enable original Copilot next edit suggestions for this language. Unified models can still provide inline completions when next edits are disabled."
+        },
+        "localalot.nextEditSuggestions.extendedRange": {
+          "type": "boolean",
+          "scope": "language-overridable",
+          "default": true,
+          "description": "Enable original Copilot predicted cursor jumps for this language. The bottom-right toggle remains a workspace fallback when no language override is set."
+        },
+        "localalot.nes.stream": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use SSE streaming for NES edits. Disable this for endpoints that only return a complete response."
+        },
+        "localalot.nes.endpoint": {
+          "type": "string",
+          "enum": [
+            "chat/completions",
+            "completions",
+            "responses",
+            "messages"
+          ],
+          "default": "chat/completions",
+          "description": "LLM API endpoint for NES"
+        },
+        "localalot.nes.sendPrediction": {
+          "type": "boolean",
+          "default": false,
+          "description": "Send the original Copilot predicted edit window to compatible chat/completions endpoints. Enable only if the model server supports the prediction request field."
+        },
+        "localalot.nes.family": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "openai-o",
+            "openai-gpt5",
+            "deepseek",
+            "qwen",
+            "moonshot",
+            "minimax",
+            "anthropic"
+          ],
+          "default": "standard",
+          "description": "Model family for NES thinking mode"
+        },
+        "localalot.nes.capabilities.limits.max_output_tokens": {
+          "type": "number",
+          "default": 9216,
+          "minimum": 1,
+          "description": "NES output cap. For smaller model windows, Localalot reduces this cap to leave room for the original prompt."
+        },
+        "localalot.nes.promptTemplate": {
+          "type": "string",
+          "default": "<|im_start|>system\n{system}<|im_end|>\n<|im_start|>user\n{user}<|im_end|>\n<|im_start|>assistant\n\n",
+          "description": "NES prompt template. Use {system} and {user} placeholders."
+        },
+        "localalot.nes.capabilities.limits.max_context_window_tokens": {
+          "type": "number",
+          "default": 128000,
+          "minimum": 1024,
+          "description": "Local NES model total context window in tokens. Smaller windows reduce the original NES context budget and output cap."
+        },
+        "localalot.nes.capabilities.supports.thinking": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the model supports thinking"
+        },
+        "localalot.nes.capabilities.supports.reasoning_effort": {
+          "type": "string",
+          "enum": [
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "default": "medium",
+          "description": "Supported reasoning effort levels"
+        },
+        "localalot.nes.allowWhitespaceOnlyChanges": {
+          "type": "boolean",
+          "scope": "language-overridable",
+          "default": true,
+          "description": "Allow NES to suggest interior whitespace and line-wrapping changes. Leading or trailing whitespace-only changes are still ignored."
+        },
+        "localalot.nes.allowImportChanges": {
+          "type": "boolean",
+          "scope": "language-overridable",
+          "default": true,
+          "description": "Allow NES to suggest import statement edits. Disable to filter edits that add, remove, or change imports."
+        },
+        "localalot.nes.suffixOverlapThreshold": {
+          "type": "number",
+          "default": 1,
+          "description": "Fallback NES provider only: duplicate-line trimming threshold. The original provider uses its own response parser."
+        },
+        "localalot.nes.suffixOverlapType": {
+          "type": "string",
+          "enum": [
+            "low",
+            "high"
+          ],
+          "default": "high",
+          "description": "Fallback NES provider only: fuzzy suffix overlap type when the threshold is below 1."
+        },
+        "localalot.nes.presencePenalty": {
+          "type": "number",
+          "default": 0,
+          "minimum": -2,
+          "maximum": 2,
+          "description": "Presence penalty for NES (-2.0 to 2.0). Positive values penalize new tokens based on whether they appear in the text so far."
+        },
+        "localalot.nes.frequencyPenalty": {
+          "type": "number",
+          "default": 0,
+          "minimum": -2,
+          "maximum": 2,
+          "description": "Frequency penalty for NES (-2.0 to 2.0). Positive values penalize new tokens based on their existing frequency."
+        },
+        "localalot.nes.nextCursorPrediction.jumpWithoutEdit": {
+          "type": "boolean",
+          "default": false,
+          "description": "Fallback NES provider only: show a standalone cursor jump without an edit. The original provider requires an edit before offering a jump."
+        },
+        "localalot.nes.nextCursorPrediction.model": {
+          "type": "string",
+          "default": "",
+          "description": "Model for the original next-cursor predictor. Empty uses localalot.nes.model."
+        },
+        "localalot.nes.semanticContextEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include language-server definitions, imports, and cursor symbol facts in original Copilot NES prompts."
+        },
+        "localalot.nes.neighborFilesEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include relevant neighboring files in original Copilot NES prompts."
+        },
+        "localalot.nes.diagnosticFixesEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Offer original Copilot diagnostic fixes, including import and async fixes, as next edits."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "build:native": "node scripts/build-native.mjs",
+    "compile": "npm run build:native && webpack",
+    "watch": "webpack --watch",
+    "package": "npm run build:native && webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "node node_modules/typescript/bin/tsc -p . --outDir out",
+    "watch-tests": "node node_modules/typescript/bin/tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.19.19",
+    "@types/vscode": "^1.125.0",
+    "@typescript/native": "npm:typescript@7.1.0-dev.20260818.1",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^4.0.0",
+    "copy-webpack-plugin": "^14.0.0",
+    "esbuild": "0.28.1",
+    "eslint": "^9.39.3",
+    "ts-loader": "^9.5.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
+    "webpack": "^5.105.3",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@humanwhocodes/gitignore-to-minimatch": "1.0.2",
+    "@microsoft/tiktokenizer": "1.0.10",
+    "@sinclair/typebox": "0.34.41",
+    "@vscode/copilot-api": "0.5.2",
+    "@vscode/l10n": "0.0.18",
+    "@vscode/prompt-tsx": "0.4.0-alpha.8",
+    "applicationinsights": "2.9.8",
+    "ignore": "7.0.5",
+    "jsonc-parser": "3.3.1",
+    "markdown-it": "^14.2.0",
+    "tree-sitter-wasms": "^0.1.13",
+    "vscode-languageserver-protocol": "3.17.5",
+    "vscode-languageserver-textdocument": "1.0.12",
+    "vscode-languageserver-types": "3.17.5",
+    "web-tree-sitter": "^0.23.2",
+    "yaml": "2.8.3"
+  }
+}
